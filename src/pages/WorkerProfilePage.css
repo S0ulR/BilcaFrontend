@@ -1,0 +1,385 @@
+/* pages/WorkerProfilePage.css */
+.worker-profile-page {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Reusar welcome-card */
+.worker-profile-page .welcome-card {
+  background: linear-gradient(135deg, #4a9d9c 0%, #3a7f7e 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 1.8rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 20px rgba(74, 157, 156, 0.2);
+  text-align: center;
+}
+
+.worker-profile-page .welcome-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.7rem;
+  font-weight: 600;
+}
+
+.worker-profile-page .welcome-card p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+/* Encabezado */
+.profile-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+  background: white;
+  padding: 1.8rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+}
+
+.profile-photo-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #4a9d9c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.profile-info h1 {
+  margin: 0 0 0.5rem;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.profile-info p {
+  margin: 0.3rem 0;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-info i {
+  color: #4a9d9c;
+  min-width: 18px;
+  text-align: center;
+}
+
+.profile-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.hourly-rate {
+  font-weight: bold;
+  color: #4a9d9c;
+}
+
+/* Acciones */
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.btn-contact,
+.btn-budget,
+.btn-hire {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.btn-contact {
+  background: #ffa726;
+  color: white;
+}
+
+.btn-contact:hover:not(:disabled) {
+  background: #f59515;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(255, 167, 38, 0.2);
+}
+
+.btn-budget {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-budget:hover:not(:disabled) {
+  background: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(23, 162, 184, 0.2);
+}
+
+.btn-hire {
+  background: #28a745;
+  color: white;
+}
+
+.btn-hire:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(40, 167, 69, 0.2);
+}
+
+/* Contenido */
+.profile-content {
+  background: white;
+  padding: 1.8rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  margin-bottom: 2rem;
+}
+
+.profile-bio h3,
+.profile-reviews h3,
+.profile-services h3 {
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.review-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #4a9d9c;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.review-comment {
+  color: #555;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Formulario de reseña */
+.review-form {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.review-form h4 {
+  margin-bottom: 0.8rem;
+  color: #2c3e50;
+}
+
+.review-form select {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.review-form textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.review-form button {
+  margin-top: 1rem;
+  padding: 0.7rem 1.5rem;
+  background: #4a9d9c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.review-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Auth required */
+.auth-required {
+  background-color: #f8f9fa;
+  border: 1px dashed #4a9d9c;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.auth-required i {
+  color: #ffa726;
+  margin-right: 0.5rem;
+}
+
+/* Servicios */
+.service-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #4a9d9c;
+}
+
+.service-item h4 {
+  margin: 0 0 0.5rem;
+  color: #2c3e50;
+}
+
+/* Autocompletado - Sugerencias */
+.suggestions-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+}
+
+.suggestions-list li:hover {
+  background: #f8f9fa;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+  .worker-profile-page {
+    padding: 0 0.8rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    padding: 1.5rem;
+    gap: 1.2rem;
+  }
+
+  .profile-photo-large {
+    width: 100px;
+    height: 100px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile-info p {
+    justify-content: center;
+  }
+
+  /* ✅ Botones ocupan TODO el ancho del contenedor */
+  .profile-actions {
+    flex-direction: column;
+    margin-left: 0;
+    align-self: stretch;
+    width: 100%;
+    gap: 0.8rem;
+  }
+
+  .btn-contact,
+  .btn-budget,
+  .btn-hire {
+    width: 100%;
+    justify-content: center;
+    font-size: 1rem;
+    padding: 0.8rem 1rem;
+    min-width: auto;
+    box-sizing: border-box; /* Asegura que padding no afecte el 100% */
+  }
+}
+
+@media (max-width: 480px) {
+  .worker-profile-page {
+    margin: 1rem auto;
+  }
+
+  .profile-header {
+    padding: 1.2rem;
+    gap: 1rem;
+  }
+
+  .profile-photo-large {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.4rem;
+  }
+
+  .btn-contact,
+  .btn-budget,
+  .btn-hire {
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .worker-profile-page {
+    margin: 1rem auto;
+  }
+
+  .profile-header {
+    padding: 1.2rem;
+    gap: 1rem;
+  }
+
+  .profile-photo-large {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.4rem;
+  }
+
+  .btn-contact,
+  .btn-budget,
+  .btn-hire {
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+  }
+}

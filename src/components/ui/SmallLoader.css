@@ -1,0 +1,29 @@
+/* src/components/ui/SmallLoader.css */
+.small-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #4a9d9c;
+  font-size: 0.9rem;
+}
+
+.small-loader-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e9ecef;
+  border-top: 2px solid #4a9d9c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.small-loader-text {
+  margin-top: 0.5rem;
+  color: #6c757d;
+}

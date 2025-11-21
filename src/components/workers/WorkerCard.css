@@ -1,0 +1,253 @@
+/* WorkerCard.css */
+.worker-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.worker-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* === Badges posicionados sin superposición === */
+.worker-badges {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+.badge.top-rated {
+  background: linear-gradient(135deg, #ff9d00, #d48000);
+  height: auto;
+  width: auto;
+}
+
+.badge.new {
+  background: linear-gradient(135deg, #2e8b57, #226a42);
+  height: auto;
+  width: auto;
+}
+
+/* === Foto de perfil grande y redonda === */
+.worker-photo-container {
+  width: 100px;
+  height: 100px;
+  margin: 3rem auto 1rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #4a9d9c;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.worker-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+/* === Texto del card === */
+.worker-name {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.worker-profession,
+.worker-location,
+.worker-rate {
+  margin: 0.3rem 0;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.worker-profession i,
+.worker-location i,
+.worker-rate i {
+  color: #4a9d9c;
+  margin-right: 0.3rem;
+  width: 18px;
+  text-align: center;
+}
+
+.worker-rate {
+  color: #4a9d9c;
+  font-weight: 600;
+}
+
+.worker-rating {
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #fdee1e;
+}
+
+.rating-count {
+  color: #6c757d;
+}
+
+.worker-bio {
+  color: #6c757d;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0.8rem 0;
+  min-height: 48px;
+}
+
+/* === Etiquetas de servicios mejoradas === */
+.worker-services-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.8rem 0;
+}
+
+.service-tag {
+  background: #e6f7ff;
+  color: #007acc;
+  border: 1px solid #bae7ff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.service-tag:hover {
+  background: #bae7ff;
+  color: #005a99;
+}
+
+.service-tag-more {
+  background: #f0f0f0;
+  color: #555;
+  border: 1px dashed #ccc;
+  font-weight: bold;
+}
+
+/* === Botón === */
+.worker-actions {
+  margin-top: 1rem;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #4a9d9c, #3a7c7b);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(135deg, #3a7c7b, #2a5d5c);
+  transform: translateY(-1px);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+  .worker-card {
+    max-width: 100%;
+    padding: 1.2rem;
+    margin: 0.5rem;
+  }
+
+  .worker-photo-container {
+    width: 90px;
+    height: 90px;
+    border-width: 3px;
+  }
+
+  .worker-name {
+    font-size: 1.1rem;
+  }
+
+  .worker-badges {
+    top: 0.75rem;
+    right: 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .worker-profession,
+  .worker-location,
+  .worker-rate {
+    font-size: 0.9rem;
+  }
+
+  .worker-services-tags {
+    gap: 0.4rem;
+  }
+
+  .service-tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+/* Móvil extremo */
+@media (max-width: 480px) {
+  .worker-card {
+    padding: 1rem;
+  }
+
+  .worker-photo-container {
+    width: 80px;
+    height: 80px;
+  }
+
+  .worker-badges {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .btn-gradient {
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+  }
+}

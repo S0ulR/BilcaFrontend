@@ -1,0 +1,346 @@
+/* ---------------------- Variables (light) -------------------- */
+:root{
+  --bg: #ffffff;
+  --muted: #6b7280;
+  --text: #0f1724;
+  --accent: #2aa7a3;       /* turquesa por defecto */
+  --danger: #e02424;
+  --pdf-accent: #6a4cff;
+  --card-shadow: 0 8px 24px rgba(16,24,40,0.06);
+  --table-border: #eef2f6;
+  --row-hover: #f5fbfb;
+  --neutral-100: #f8fafc;
+  --radius: 12px;
+  --font-base: 15px;
+}
+
+/* ---------------------- Dark mode ---------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root{
+    --bg: #0b1220;
+    --muted: #9aa4b2;
+    --text: #e6eef6;
+    --accent: #2aa7a3;
+    --danger: #ff6b6b;
+    --pdf-accent: #b49bff;
+    --card-shadow: 0 12px 38px rgba(0,0,0,0.6);
+    --table-border: rgba(255,255,255,0.04);
+    --row-hover: rgba(255,255,255,0.02);
+    --neutral-100: rgba(255,255,255,0.02);
+  }
+}
+
+/* ---------------------- Contenedor --------------------------- */
+.data-table-container{
+  max-width: 1300px;
+  margin: 1.6rem auto;
+  padding: 0 1rem;
+  font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--font-base);
+  color: var(--text);
+}
+
+/* ---------------------- Search bar --------------------------- */
+.search-bar-container{
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.search-bar{
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+}
+.search-bar input{
+  width: 100%;
+  padding: 0.72rem 1rem 0.72rem 3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(16,24,40,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,250,252,0.95));
+  box-shadow: var(--card-shadow);
+  transition: box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  color: var(--text);
+}
+@media (prefers-color-scheme: dark){
+  .search-bar input{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.04);
+    color: var(--text);
+  }
+}
+.search-bar input:focus{
+  outline: none;
+  box-shadow: 0 10px 30px rgba(42,167,163,0.12);
+  border-color: rgba(42,167,163,0.6);
+}
+
+.search-icon{
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 1rem;
+}
+.clear-search{
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* ---------------------- Table wrapper ------------------------ */
+.table-wrapper{
+  background: var(--bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--table-border);
+}
+
+/* ---------------------- Table ------------------------------- */
+.data-table{
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 780px;
+  table-layout: auto;
+}
+
+/* Head */
+.data-table thead th{
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: linear-gradient(180deg, var(--neutral-100), transparent);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.86rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--table-border);
+  text-align: left;
+}
+
+/* Sortable hover */
+.data-table th.sortable { cursor: pointer; }
+.data-table th.sortable:hover { color: var(--accent); }
+
+/* th content wrapper */
+.th-content{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Sort icons */
+.sort-icon{
+  margin-left: 0.25rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.sort-icon.active{
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* Body rows */
+.data-table tbody tr{
+  transition: background .12s ease, transform .08s ease;
+}
+.data-table tbody tr:hover{
+  background: var(--row-hover);
+}
+
+/* Cells */
+.data-table td{
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--table-border);
+  vertical-align: middle;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* ---------------------- User cell (avatar + texts) ------------ */
+.user-cell{
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+}
+.user-photo{
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 3px 10px rgba(16,24,40,0.08);
+  flex: 0 0 44px;
+}
+
+.worker-name{
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+.worker-sub{
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 0.08rem;
+}
+
+/* ---------------------- Badges / estado / urgente ------------ */
+.urgent-badge{
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #024b45;
+  background: #e6f7f6;
+  border: 1px solid rgba(42,167,163,0.12);
+}
+
+.status-badge{
+  display: inline-block;
+  padding: 0.36rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3b3f46;
+  background: #fff6d9;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* ---------------------- Date cell (main + sub) ---------------- */
+.date-cell{
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.date-cell .date-main{
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.date-cell .date-sub{
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* ---------------------- Actions: botones refinados ------------ */
+.actions-cell{
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Botón base */
+.action-btn{
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(15,23,42,0.03);
+  transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(16,24,40,0.02);
+}
+
+/* Hover sutil y sin escalado excesivo */
+.action-btn:hover{
+  transform: translateY(-2px);
+  background: rgba(15,23,42,0.05);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+}
+.action-btn:active{ transform: translateY(0); }
+.action-btn:focus{
+  outline: 3px solid rgba(42,167,163,0.18);
+  outline-offset: 3px;
+}
+
+/* Iconos dentro del botón */
+.action-btn i{
+  font-size: 1.06rem;
+  color: var(--muted);
+  transition: color .14s ease;
+}
+
+/* Colores por acción */
+.action-btn.btn-view i{ color: #2563eb; }   /* azul */
+.action-btn.btn-pdf i{ color: var(--pdf-accent); } /* violeta */
+.action-btn.btn-delete i{ color: var(--danger); }
+
+/* Estado PDF generado: fondo y color destacado */
+.action-btn.btn-pdf.generated{
+  background: linear-gradient(90deg, rgba(106,76,255,0.06), rgba(42,167,163,0.03));
+  box-shadow: 0 8px 26px rgba(106,76,255,0.06);
+}
+.action-btn.btn-pdf.generated i{ color: #4a35c7; }
+
+/* ---------------------- Empty state -------------------------- */
+.empty-state{
+  text-align: center;
+  padding: 2.2rem;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+/* ---------------------- Pagination --------------------------- */
+.pagination{
+  margin-top: 1.4rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.page-btn{
+  width: 44px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .12s ease, transform .12s ease;
+}
+@media (prefers-color-scheme: dark){
+  .page-btn{ background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); }
+}
+.page-btn:hover:not(:disabled){
+  background: rgba(74,157,156,0.06);
+  transform: translateY(-2px);
+}
+.page-btn:disabled{
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+.page-info{
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* ---------------------- Responsive tweaks ------------------- */
+@media (max-width: 900px){
+  .worker-name{ font-size: 0.95rem; }
+  .user-photo{ width: 40px; height: 40px; }
+  .action-btn{ width: 38px; height: 38px; }
+  .page-info{ font-size: 0.9rem; }
+}
+@media (max-width: 520px){
+  .data-table{ min-width: 620px; }
+  .data-table thead th{ padding: 0.7rem; font-size: .78rem; }
+  .data-table td{ padding: 0.7rem; font-size: .84rem; }
+}
+

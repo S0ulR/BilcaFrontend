@@ -1,0 +1,194 @@
+/* src/pages/WorkerList.css */
+
+.worker-list-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.worker-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.worker-list-header h1 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Filtros */
+.advanced-filters {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  min-width: 300px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 140px;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.advanced-filters select,
+.advanced-filters input {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  background: white;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  min-height: 44px;
+}
+
+.advanced-filters input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.advanced-filters select:focus,
+.advanced-filters input:focus {
+  outline: none;
+  border-color: #4a9d9c;
+  box-shadow: 0 0 0 3px rgba(74, 157, 156, 0.2);
+}
+
+/* Grid de trabajadores */
+.worker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Mensajes */
+.error, .no-results {
+  color: #dc3545;
+  text-align: center;
+  font-size: 1.1rem;
+  font-style: italic;
+  padding: 3rem 1rem;
+  background: #fff5f5;
+  border-radius: 12px;
+  border: 1px dashed #f5c6cb;
+}
+
+/* Paginación */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 2.5rem 0;
+  flex-wrap: wrap;
+}
+
+.pagination-select {
+  padding: 0.65rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  min-width: 160px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.pagination-select:focus {
+  outline: none;
+  border-color: #4a9d9c;
+}
+
+.pagination-btn {
+  background-color: #4a9d9c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #3a7f7e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 157, 156, 0.3);
+}
+
+.pagination-btn:disabled {
+  background-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .worker-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .advanced-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    min-width: 100%;
+  }
+
+  .pagination-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pagination-btn,
+  .pagination-select {
+    width: 100%;
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .worker-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .worker-list-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .worker-list-header h1 {
+    font-size: 1.6rem;
+  }
+}

@@ -1,0 +1,201 @@
+/* ContractForm.css */
+
+.document-form {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Reusar welcome-card */
+.document-form .welcome-card {
+  background: linear-gradient(135deg, #4a9d9c 0%, #3a7f7e 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 1.8rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(74, 157, 156, 0.2);
+}
+
+.document-form .welcome-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.document-form .welcome-card p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.05rem;
+}
+
+/* Formulario */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.document-form input,
+.document-form textarea {
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.document-form input:focus,
+.document-form textarea:focus {
+  border-color: #4a9d9c;
+  box-shadow: 0 0 0 3px rgba(74, 157, 156, 0.2);
+  background: white;
+}
+
+.document-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Vista previa */
+.contract-preview {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  margin-top: 1.5rem;
+}
+
+.contract-preview h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.8rem;
+}
+
+.preview-content {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.preview-header h4 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.preview-client, .preview-worker, .preview-details {
+  margin-bottom: 1rem;
+}
+
+/* Botones de acción */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.btn-preview,
+.btn-download,
+.btn-send,
+.btn-cancel {
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 200px;
+}
+
+.btn-preview {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-preview:hover {
+  background: #138496;
+}
+
+.btn-download {
+  background: #4a9d9c;
+  color: white;
+}
+
+.btn-download:hover {
+  background: #3a7f7e;
+}
+
+.btn-send {
+  background: #007bff;
+  color: white;
+}
+
+.btn-send:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: #5a6268;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .document-form {
+    padding: 1.5rem;
+    margin: 1.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-preview,
+  .btn-download,
+  .btn-send,
+  .btn-cancel {
+    max-width: 100%;
+  }
+}

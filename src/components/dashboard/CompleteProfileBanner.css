@@ -1,0 +1,53 @@
+/* frontend/components/dashboard/CompleteProfileBanner.css */
+.complete-profile-banner {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #856404;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.complete-profile-banner i {
+  color: #fdcb3b;
+  font-size: 1.2rem;
+}
+
+.banner-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-edit {
+  background: #4a9d9c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.btn-edit:hover {
+  background: #3a7c7b;
+}
+
+.btn-skip {
+  background: transparent;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-skip:hover {
+  background: #ffeaa7;
+}

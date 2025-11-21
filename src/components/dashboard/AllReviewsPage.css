@@ -1,0 +1,221 @@
+/* AllReviewsPage.css */
+.all-reviews-page {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Reusar welcome-card */
+.all-reviews-page .welcome-card {
+  background: linear-gradient(135deg, #4a9d9c 0%, #3a7f7e 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 8px 20px rgba(74, 157, 156, 0.2);
+  text-align: center;
+}
+
+.all-reviews-page .welcome-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.9rem;
+  font-weight: 600;
+}
+
+.all-reviews-page .welcome-card p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.05rem;
+}
+
+/* Distribución de valoraciones */
+.rating-distribution {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.rating-distribution h3 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.rating-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bar-container {
+  flex: 1;
+  height: 12px;
+  background: #eee;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: #4a9d9c;
+  transition: width 0.4s ease;
+}
+
+.rating-bar span {
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+  color: #555;
+}
+
+/* Lista de reseñas */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.review-card {
+  background: white;
+  padding: 1.8rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.review-comment {
+  color: #555;
+  font-style: italic;
+  margin: 1rem 0;
+  line-height: 1.5;
+}
+
+.review-card small {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Formulario de respuesta */
+.reply-form {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reply-form input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.reply-form input:focus {
+  border-color: #4a9d9c;
+  box-shadow: 0 0 0 2px rgba(74, 157, 156, 0.2);
+}
+
+.reply-form button {
+  background: #4a9d9c;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.reply-form button:hover:not(:disabled) {
+  background: #3a7f7e;
+  transform: translateY(-1px);
+}
+
+/* Respuesta enviada */
+.reply-box {
+  background: #e9f7f6;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  border-left: 4px solid #4a9d9c;
+}
+
+.reply-box p {
+  margin: 0.3rem 0;
+  font-style: normal;
+  color: #444;
+}
+
+/* Estado vacío */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #999;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px dashed #ddd;
+}
+
+.empty-state i {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ccc;
+}
+
+/* Paginación */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2.5rem 0 1.5rem;
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.pagination-controls span {
+  font-weight: 500;
+}
+
+.pagination-controls button {
+  background: #4a9d9c;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.pagination-controls button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #3a7f7e;
+  transform: translateY(-1px);
+}

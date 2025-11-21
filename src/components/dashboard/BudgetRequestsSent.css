@@ -1,0 +1,288 @@
+/* src/components/dashboard/BudgetRequestsSent.css */
+.budget-requests-page.sent {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Título */
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #2c3e50;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.8rem;
+  text-align: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Estado de carga */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  color: #6c757d;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.loading-state i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #4a9d9c;
+}
+
+/* Estado vacío */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6c757d;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.empty-state i {
+  font-size: 3.5rem;
+  color: #ddd;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin: 0.5rem 0;
+  font-size: 1.3rem;
+  color: #495057;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+/* Estado badge */
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.respondido {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge.rechazado {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Barra de búsqueda (para mobile) */
+.search-bar-container {
+  margin: 1.5rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 0.8rem 0.8rem 0.8rem 2.8rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.search-bar input:focus {
+  border-color: #4a9d9c;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 1rem;
+}
+
+.clear-search {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Vista de cards (mobile) */
+.requests-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+/* Modales personalizados */
+.budget-response-content,
+.chat-start-form {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+.budget-response-content p {
+  margin: 0.5rem 0;
+}
+
+/* Acciones en modales */
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.modal-actions button {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.modal-actions button[type="button"] {
+  background: #6c757d;
+  color: white;
+}
+
+.modal-actions button[type="button"]:hover {
+  background: #5a6268;
+}
+
+.btn-chat {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-chat:hover {
+  background: #138496;
+}
+
+.btn-accept {
+  background: #28a745;
+  color: white;
+}
+
+.btn-accept:hover {
+  background: #218838;
+}
+
+.btn-send {
+  background: #007bff;
+  color: white;
+}
+
+.btn-send:hover {
+  background: #0056b3;
+}
+
+.action-btn.btn-pdf {
+  background-color: transparent !important;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 1024px) {
+  .page-title {
+    font-size: 1.5rem;
+    justify-content: flex-start;
+  }
+
+  .modal-actions {
+    gap: 0.75rem;
+  }
+
+  .modal-actions button {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.5rem;
+    justify-content: flex-start;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .budget-requests-page.sent {
+    margin: 1rem 0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .page-title {
+    font-size: 1.3rem;
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .loading-state {
+    padding: 2rem 1rem;
+  }
+
+  .loading-state i {
+    font-size: 2rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-state i {
+    font-size: 2rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+  }
+}
