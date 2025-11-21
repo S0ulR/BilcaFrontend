@@ -3,6 +3,17 @@ import { io } from "socket.io-client";
 
 let socketInstance = null;
 
+// ✅ Determinar la URL del servidor de sockets según el entorno
+const getSocketURL = () => {
+  if (process.env.NODE_ENV === "development") {
+    // Asegúrate de que esta URL coincida con el puerto donde corre tu backend en desarrollo
+    return process.env.REACT_APP_SOCKET_URL || "http://localhost:5000";
+  }
+  // En producción, si el socket corre en el mismo dominio que tu frontend, puedes usar ''
+  // Si corre en otro dominio/puerto, debes usar la URL completa
+  return process.env.REACT_APP_SOCKET_URL || ""; // '' significa mismo dominio/origen
+};
+
 export const getSocket = (token, userId) => {
   // Si ya existe una conexión activa, reutilízala
   if (socketInstance && socketInstance.connected) {
@@ -18,8 +29,10 @@ export const getSocket = (token, userId) => {
     socketInstance = null;
   }
 
-  // Crear nueva conexión
-  socketInstance = io("http://localhost:5000", {
+  // ✅ Usar la URL dinámica para la conexión
+  const socketURL = getSocketURL();
+
+  socketInstance = io(socketURL, {
     auth: { token },
     query: { userId },
     reconnection: true,
