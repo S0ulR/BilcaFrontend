@@ -53,14 +53,20 @@ const WorkerProfilePage = () => {
         worker.location.address || "",
         worker.location.locality || "",
         worker.location.province || "",
-        worker.location.country || "Argentina"
-      ].filter(Boolean).join(", ");
+        worker.location.country || "Argentina",
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-      setBudgetForm(prev => ({
-        ...prev,
-        address: fullAddress,
-        country: worker.location.country || "Argentina"
-      }));
+      // Solo actualizar el estado si el valor es diferente
+      setBudgetForm((prev) => {
+        const newAddress = fullAddress;
+        const newCountry = worker.location.country || "Argentina";
+        if (prev.address !== newAddress || prev.country !== newCountry) {
+          return { ...prev, address: newAddress, country: newCountry };
+        }
+        return prev;
+      });
     }
   }, [worker]);
 
@@ -77,25 +83,28 @@ const WorkerProfilePage = () => {
       setWorker(data);
 
       // Inicializar formularios
-      const defaultService = services.length > 0 ? services[0].profession : "Servicio";
+      const defaultService =
+        services.length > 0 ? services[0].profession : "Servicio";
 
-      setHireForm(prev => ({
+      setHireForm((prev) => ({
         ...prev,
-        service: prev.service || `Contratación de ${defaultService}`
+        service: prev.service || `Contratación de ${defaultService}`,
       }));
 
       const fullAddress = [
         data.location?.address,
         data.location?.locality,
         data.location?.province,
-        data.location?.country
-      ].filter(Boolean).join(", ");
+        data.location?.country,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-      setBudgetForm(prev => ({
+      setBudgetForm((prev) => ({
         ...prev,
         profession: prev.profession || defaultService,
         address: fullAddress || "",
-        country: data.location?.country || "Argentina"
+        country: data.location?.country || "Argentina",
       }));
     } catch (err) {
       console.error("Error al cargar perfil:", err);
@@ -119,7 +128,8 @@ const WorkerProfilePage = () => {
           Para contactar,{" "}
           <a href="/login" style={{ color: "#FFA726" }}>
             inicia sesión
-          </a>.
+          </a>
+          .
         </span>
       );
     }
@@ -147,7 +157,8 @@ const WorkerProfilePage = () => {
           Para contratar,{" "}
           <a href="/login" style={{ color: "#FFA726" }}>
             inicia sesión
-          </a>.
+          </a>
+          .
         </span>
       );
     }
@@ -166,7 +177,10 @@ const WorkerProfilePage = () => {
 
       success("¡Solicitud enviada!", "El trabajador la recibirá pronto");
       setHireForm({
-        service: worker.services?.length > 0 ? `Contratación de ${worker.services[0].profession}` : "Nuevo trabajo",
+        service:
+          worker.services?.length > 0
+            ? `Contratación de ${worker.services[0].profession}`
+            : "Nuevo trabajo",
         description: "",
         budget: "",
       });
@@ -182,10 +196,16 @@ const WorkerProfilePage = () => {
 
     // Validación adicional
     if (!budgetForm.province?.trim()) {
-      return showError("Campo requerido", "La provincia no pudo ser detectada. Por favor, escribe una dirección válida.");
+      return showError(
+        "Campo requerido",
+        "La provincia no pudo ser detectada. Por favor, escribe una dirección válida."
+      );
     }
     if (!budgetForm.locality?.trim()) {
-      return showError("Campo requerido", "La localidad no pudo ser detectada.");
+      return showError(
+        "Campo requerido",
+        "La localidad no pudo ser detectada."
+      );
     }
 
     try {
@@ -199,7 +219,8 @@ const WorkerProfilePage = () => {
 
       // Resetear formulario
       setBudgetForm({
-        profession: worker.services?.length > 0 ? worker.services[0].profession : "",
+        profession:
+          worker.services?.length > 0 ? worker.services[0].profession : "",
         startDate: "",
         description: "",
         address: "",
@@ -210,93 +231,106 @@ const WorkerProfilePage = () => {
       });
       setSuggestions([]);
     } catch (err) {
-      const errorMsg = err.response?.data?.msg || "No se pudo enviar la solicitud";
+      const errorMsg =
+        err.response?.data?.msg || "No se pudo enviar la solicitud";
       showError("Error", errorMsg);
     }
   };
 
   // Obtener ubicación actual del usuario
-const handleUseCurrentLocation = () => {
-  if (!navigator.geolocation) {
-    showError("Geolocalización no soportada", "Tu navegador no soporta geolocalización.");
-    return;
-  }
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      showError(
+        "Geolocalización no soportada",
+        "Tu navegador no soporta geolocalización."
+      );
+      return;
+    }
 
-  setIsFetchingLocation(true);
+    setIsFetchingLocation(true);
 
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      const { latitude, longitude } = position.coords;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
 
-      try {
-        const response = await API.get(`/geocode/reverse`, {
-          params: { lat: latitude, lon: longitude }
-        });
+        try {
+          const response = await API.get(`/geocode/reverse`, {
+            params: { lat: latitude, lon: longitude },
+          });
 
-        const data = response.data;
-        const addr = data.address;
+          const data = response.data;
+          const addr = data.address;
 
-        setBudgetForm({
-          ...budgetForm,
-          address: data.display_name,
-          locality: addr.town || addr.city || addr.suburb || "",
-          province: addr.state || "Santa Fe",
-          country: addr.country || "Argentina",
-        });
-        setSuggestions([]);
-        success("Ubicación detectada", "Se usó tu ubicación actual.");
-      } catch (err) {
-        console.error("Error en reverse geocoding:", err);
-        showError("Error", "No se pudo obtener tu dirección. ¿Estás bien conectado?");
-      } finally {
+          setBudgetForm({
+            ...budgetForm,
+            address: data.display_name,
+            locality: addr.town || addr.city || addr.suburb || "",
+            province: addr.state || "Santa Fe",
+            country: addr.country || "Argentina",
+          });
+          setSuggestions([]);
+          success("Ubicación detectada", "Se usó tu ubicación actual.");
+        } catch (err) {
+          console.error("Error en reverse geocoding:", err);
+          showError(
+            "Error",
+            "No se pudo obtener tu dirección. ¿Estás bien conectado?"
+          );
+        } finally {
+          setIsFetchingLocation(false);
+        }
+      },
+      (error) => {
         setIsFetchingLocation(false);
-      }
-    },
-    (error) => {
-      setIsFetchingLocation(false);
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          showError("Permiso denegado", "Por favor, permite el acceso a tu ubicación.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          showError("Ubicación no disponible", "No se pudo obtener tu ubicación.");
-          break;
-        case error.TIMEOUT:
-          showError("Tiempo agotado", "La solicitud de ubicación expiró.");
-          break;
-        default:
-          showError("Error desconocido", "No se pudo obtener tu ubicación.");
-          break;
-      }
-    },
-    { timeout: 10000, enableHighAccuracy: true }
-  );
-};
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            showError(
+              "Permiso denegado",
+              "Por favor, permite el acceso a tu ubicación."
+            );
+            break;
+          case error.POSITION_UNAVAILABLE:
+            showError(
+              "Ubicación no disponible",
+              "No se pudo obtener tu ubicación."
+            );
+            break;
+          case error.TIMEOUT:
+            showError("Tiempo agotado", "La solicitud de ubicación expiró.");
+            break;
+          default:
+            showError("Error desconocido", "No se pudo obtener tu ubicación.");
+            break;
+        }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
 
   // Autocompletado con Nominatim (OpenStreetMap)
-const handleLocationChange = async (e) => {
-  const value = e.target.value;
-  setBudgetForm({ ...budgetForm, address: value });
-  setSuggestions([]);
+  const handleLocationChange = async (e) => {
+    const value = e.target.value;
+    setBudgetForm({ ...budgetForm, address: value });
+    setSuggestions([]);
 
-  if (value.length < 3) return;
+    if (value.length < 3) return;
 
-  try {
-    const response = await API.get(`/geocode/search`, {
-      params: { q: value, country: "AR" }
-    });
+    try {
+      const response = await API.get(`/geocode/search`, {
+        params: { q: value, country: "AR" },
+      });
 
-    const filtered = response.data.map(item => ({
-      display_name: item.display_name,
-      address: item.address || {},
-    }));
+      const filtered = response.data.map((item) => ({
+        display_name: item.display_name,
+        address: item.address || {},
+      }));
 
-    setSuggestions(filtered);
-  } catch (err) {
-    console.error("Error buscando dirección:", err);
-    showError("Error", "No se pudo buscar la dirección. Revisa tu conexión.");
-  }
-};
+      setSuggestions(filtered);
+    } catch (err) {
+      console.error("Error buscando dirección:", err);
+      showError("Error", "No se pudo buscar la dirección. Revisa tu conexión.");
+    }
+  };
 
   // Seleccionar sugerencia
   const selectSuggestion = (suggestion) => {
@@ -314,7 +348,12 @@ const handleLocationChange = async (e) => {
   if (loading) {
     return (
       <div className="worker-profile-page">
-        <Breadcrumb items={[{ label: "Inicio", path: "/" }, { label: "Perfil", active: true }]} />
+        <Breadcrumb
+          items={[
+            { label: "Inicio", path: "/" },
+            { label: "Perfil", active: true },
+          ]}
+        />
         <div className="welcome-card">
           <h1>Cargando perfil...</h1>
         </div>
@@ -325,7 +364,12 @@ const handleLocationChange = async (e) => {
   if (!worker) {
     return (
       <div className="worker-profile-page">
-        <Breadcrumb items={[{ label: "Inicio", path: "/" }, { label: "Perfil", active: true }]} />
+        <Breadcrumb
+          items={[
+            { label: "Inicio", path: "/" },
+            { label: "Perfil", active: true },
+          ]}
+        />
         <div className="welcome-card">
           <h1>Perfil no encontrado</h1>
           <p>El trabajador que buscas no existe.</p>
@@ -337,11 +381,13 @@ const handleLocationChange = async (e) => {
   return (
     <div className="worker-profile-page">
       {/* Breadcrumb */}
-      <Breadcrumb items={[
-        { label: "Inicio", path: "/" },
-        { label: "Trabajadores", path: "/workers" },
-        { label: worker.name, active: true }
-      ]} />
+      <Breadcrumb
+        items={[
+          { label: "Inicio", path: "/" },
+          { label: "Trabajadores", path: "/workers" },
+          { label: worker.name, active: true },
+        ]}
+      />
 
       {/* Encabezado */}
       <div className="profile-header">
@@ -349,7 +395,7 @@ const handleLocationChange = async (e) => {
           src={worker.photo || "/assets/default-avatar.png"}
           alt={worker.name}
           className="profile-photo-large"
-          onError={(e) => e.target.src = "/assets/default-avatar.png"}
+          onError={(e) => (e.target.src = "/assets/default-avatar.png")}
         />
         <div className="profile-info">
           <h1>{worker.name}</h1>
@@ -359,21 +405,24 @@ const handleLocationChange = async (e) => {
             {worker.services && worker.services.length > 0 ? (
               worker.services.map((s, i) => (
                 <p key={i}>
-                  <i className="fas fa-briefcase"></i>{" "}
-                  {s.profession}{" "}
+                  <i className="fas fa-briefcase"></i> {s.profession}{" "}
                   {s.hourlyRate && (
                     <span className="hourly-rate">(${s.hourlyRate}/hora)</span>
                   )}
                 </p>
               ))
             ) : (
-              <p><i className="fas fa-briefcase"></i> Oficios no especificados</p>
+              <p>
+                <i className="fas fa-briefcase"></i> Oficios no especificados
+              </p>
             )}
           </div>
 
           <p>
             <i className="fas fa-map-marker-alt"></i>{" "}
-            {worker.location?.locality || worker.location?.city || "Ubicación no especificada"}
+            {worker.location?.locality ||
+              worker.location?.city ||
+              "Ubicación no especificada"}
           </p>
           <div className="profile-rating">
             <StarRating rating={worker.rating} size="1.3rem" />
@@ -383,11 +432,18 @@ const handleLocationChange = async (e) => {
 
         {!isWorker && (
           <div className="profile-actions">
-            <button className="btn-contact" onClick={() => setContactModalOpen(true)}>
+            <button
+              className="btn-contact"
+              onClick={() => setContactModalOpen(true)}
+            >
               <i className="fas fa-comment-dots"></i> Contactar
             </button>
-            <button className="btn-budget" onClick={() => setBudgetModalOpen(true)}>
-              <i className="fas fa-file-invoice-dollar"></i> Solicitar presupuesto
+            <button
+              className="btn-budget"
+              onClick={() => setBudgetModalOpen(true)}
+            >
+              <i className="fas fa-file-invoice-dollar"></i> Solicitar
+              presupuesto
             </button>
             <button className="btn-hire" onClick={handleHire}>
               <i className="fas fa-handshake"></i> Contratar
@@ -400,7 +456,9 @@ const handleLocationChange = async (e) => {
       <div className="profile-content">
         <section className="profile-bio">
           <h3>Sobre mí</h3>
-          <p>{worker.bio || "Este trabajador aún no ha escrito una biografía."}</p>
+          <p>
+            {worker.bio || "Este trabajador aún no ha escrito una biografía."}
+          </p>
         </section>
 
         {/* Servicios detallados */}
@@ -442,7 +500,6 @@ const handleLocationChange = async (e) => {
           ) : (
             <p>Aún no hay reseñas para este trabajador.</p>
           )}
-
         </section>
       </div>
 
@@ -467,7 +524,9 @@ const handleLocationChange = async (e) => {
           </div>
           <div className="modal-actions">
             <button type="submit">Enviar</button>
-            <button type="button" onClick={() => setContactModalOpen(false)}>Cancelar</button>
+            <button type="button" onClick={() => setContactModalOpen(false)}>
+              Cancelar
+            </button>
           </div>
         </form>
       </Modal>
@@ -486,12 +545,16 @@ const handleLocationChange = async (e) => {
                 <label>Profesión del trabajo *</label>
                 <select
                   value={budgetForm.profession}
-                  onChange={(e) => setBudgetForm({ ...budgetForm, profession: e.target.value })}
+                  onChange={(e) =>
+                    setBudgetForm({ ...budgetForm, profession: e.target.value })
+                  }
                   required
                 >
                   {worker.services?.length > 0 ? (
                     worker.services.map((s, i) => (
-                      <option key={i} value={s.profession}>{s.profession}</option>
+                      <option key={i} value={s.profession}>
+                        {s.profession}
+                      </option>
                     ))
                   ) : (
                     <option value="">Selecciona un oficio</option>
@@ -503,29 +566,51 @@ const handleLocationChange = async (e) => {
                 <input
                   type="date"
                   value={budgetForm.startDate}
-                  onChange={(e) => setBudgetForm({ ...budgetForm, startDate: e.target.value })}
+                  onChange={(e) =>
+                    setBudgetForm({ ...budgetForm, startDate: e.target.value })
+                  }
                 />
               </div>
               <div className="form-group">
                 <label>¿Es urgente?</label>
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+                >
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      margin: 0,
+                    }}
+                  >
                     <input
                       type="radio"
                       name="urgent"
                       value="no"
                       checked={budgetForm.urgent === "no" || !budgetForm.urgent}
-                      onChange={() => setBudgetForm({ ...budgetForm, urgent: "no" })}
+                      onChange={() =>
+                        setBudgetForm({ ...budgetForm, urgent: "no" })
+                      }
                     />
                     No
                   </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      margin: 0,
+                    }}
+                  >
                     <input
                       type="radio"
                       name="urgent"
                       value="si"
                       checked={budgetForm.urgent === "si"}
-                      onChange={() => setBudgetForm({ ...budgetForm, urgent: "si" })}
+                      onChange={() =>
+                        setBudgetForm({ ...budgetForm, urgent: "si" })
+                      }
                     />
                     Sí
                   </label>
@@ -537,7 +622,12 @@ const handleLocationChange = async (e) => {
                 <label>Descripción del trabajo *</label>
                 <textarea
                   value={budgetForm.description}
-                  onChange={(e) => setBudgetForm({ ...budgetForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setBudgetForm({
+                      ...budgetForm,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Describe el trabajo que necesitas..."
                   rows="3"
                   required
@@ -569,11 +659,19 @@ const handleLocationChange = async (e) => {
                     borderRadius: "8px",
                     fontSize: "0.9rem",
                     cursor: "pointer",
-                    width: "fit-content"
+                    width: "fit-content",
                   }}
                 >
-                  <i className={`fas ${isFetchingLocation ? "fa-spinner fa-spin" : "fa-map-marker-alt"}`}></i>
-                  {isFetchingLocation ? "Obteniendo ubicación..." : "Usar mi ubicación actual"}
+                  <i
+                    className={`fas ${
+                      isFetchingLocation
+                        ? "fa-spinner fa-spin"
+                        : "fa-map-marker-alt"
+                    }`}
+                  ></i>
+                  {isFetchingLocation
+                    ? "Obteniendo ubicación..."
+                    : "Usar mi ubicación actual"}
                 </button>
                 {suggestions.length > 0 && (
                   <ul className="suggestions-list">
@@ -601,7 +699,9 @@ const handleLocationChange = async (e) => {
           </div>
           <div className="modal-actions">
             <button type="submit">Enviar solicitud</button>
-            <button type="button" onClick={() => setBudgetModalOpen(false)}>Cancelar</button>
+            <button type="button" onClick={() => setBudgetModalOpen(false)}>
+              Cancelar
+            </button>
           </div>
         </form>
       </Modal>

@@ -42,7 +42,10 @@ const BudgetRequestsSent = () => {
       const updated = new Set(prev);
       updated.add(requestId);
       try {
-        sessionStorage.setItem("budgetPDFsGenerated_sent", JSON.stringify([...updated]));
+        sessionStorage.setItem(
+          "budgetPDFsGenerated_sent",
+          JSON.stringify([...updated])
+        );
       } catch (e) {
         console.warn("No se pudo guardar en sessionStorage");
       }
@@ -55,7 +58,11 @@ const BudgetRequestsSent = () => {
       setLoading(true);
       try {
         const res = await API.get("/budget-requests/sent");
-        setRequests(Array.isArray(res.data) ? res.data : []);
+        // ✅ Filtrar solicitudes: solo mostrar las que NO están "respondido"
+        const filteredRequests = (
+          Array.isArray(res.data) ? res.data : []
+        ).filter((req) => req.status !== "respondido");
+        setRequests(filteredRequests);
       } catch (err) {
         console.error("Error al cargar solicitudes enviadas:", err);
         showError("No se pudieron cargar tus solicitudes de presupuesto");
@@ -90,14 +97,19 @@ const BudgetRequestsSent = () => {
 
     // Eliminar la solicitud de presupuesto de la lista local
     // para que no aparezca más en esta vista
-    setRequests(prevRequests => prevRequests.filter(r => r._id !== req._id));
+    setRequests((prevRequests) =>
+      prevRequests.filter((r) => r._id !== req._id)
+    );
 
     // Opcional: Eliminar del sessionStorage si se usó allí
-    setGeneratedPDFs(prev => {
+    setGeneratedPDFs((prev) => {
       const updated = new Set(prev);
       updated.delete(req._id);
       try {
-        sessionStorage.setItem("budgetPDFsGenerated_sent", JSON.stringify([...updated]));
+        sessionStorage.setItem(
+          "budgetPDFsGenerated_sent",
+          JSON.stringify([...updated])
+        );
       } catch (e) {
         console.warn("No se pudo actualizar sessionStorage");
       }
@@ -116,12 +128,17 @@ const BudgetRequestsSent = () => {
 
   const handleOpenChatModal = (req) => {
     setChatModal(req);
-    setChatMessage(`Hola ${req.worker.name}, gracias por tu presupuesto de $${req.response.budget}. ¿Podrías darme más detalles?`);
+    setChatMessage(
+      `Hola ${req.worker.name}, gracias por tu presupuesto de $${req.response.budget}. ¿Podrías darme más detalles?`
+    );
   };
 
   const handleStartChat = async () => {
     if (!chatMessage.trim()) {
-      showError("Mensaje vacío", "Escribe un mensaje para comenzar la conversación.");
+      showError(
+        "Mensaje vacío",
+        "Escribe un mensaje para comenzar la conversación."
+      );
       return;
     }
 
@@ -170,16 +187,19 @@ const BudgetRequestsSent = () => {
       setResponseModal({
         _id: req._id,
         title: "PDF ya descargado",
-        message: "Ya descargaste este presupuesto. ¿Deseas volver a descargarlo?",
+        message:
+          "Ya descargaste este presupuesto. ¿Deseas volver a descargarlo?",
         showDownloadButton: true,
-        request: req // Guardamos la solicitud para poder generar el PDF nuevamente
+        request: req, // Guardamos la solicitud para poder generar el PDF nuevamente
       });
       return;
     }
 
     const data = {
       date: new Date().toLocaleDateString("es-AR"),
-      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("es-AR"),
+      validUntil: new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toLocaleDateString("es-AR"),
       client: {
         name: user?.name || "Cliente",
         email: user?.email || "N/A",
@@ -228,25 +248,27 @@ const BudgetRequestsSent = () => {
           />
           <span className="worker-name">{row.worker.name}</span>
         </div>
-      )
+      ),
     },
     {
       key: "service",
       header: "Servicio",
       accessor: "profession",
-      sortable: true
+      sortable: true,
     },
     {
       key: "description",
       header: "Descripción",
       accessor: "description",
       render: (row) => (
-        <div className="desc" title={row.description}> {/* Usamos la clase .desc del otro archivo */}
+        <div className="desc" title={row.description}>
+          {" "}
+          {/* Usamos la clase .desc del otro archivo */}
           {row.description.length > 80
             ? `${row.description.substring(0, 80)}...`
             : row.description}
         </div>
-      )
+      ),
     },
     {
       key: "urgent",
@@ -257,19 +279,18 @@ const BudgetRequestsSent = () => {
         <span className={`urgent-badge ${row.urgent}`}>
           {row.urgent === "si" ? "Sí" : "No"}
         </span>
-      )
+      ),
     },
     {
       key: "date",
       header: "Fecha",
       accessor: "createdAt",
       sortable: true,
-      render: (row) => (
+      render: (row) =>
         new Date(row.createdAt).toLocaleDateString("es-AR", {
           day: "2-digit",
           month: "short",
-        })
-      )
+        }),
     },
     {
       key: "status",
@@ -287,13 +308,9 @@ const BudgetRequestsSent = () => {
           displayText = "Rechazado";
         }
 
-        return (
-          <span className={`status-badge ${status}`}>
-            {displayText}
-          </span>
-        );
-      }
-    }
+        return <span className={`status-badge ${status}`}>{displayText}</span>;
+      },
+    },
   ];
 
   // Definir acciones para DataTable (adaptadas al estilo de BudgetRequestsReceived)
@@ -304,19 +321,19 @@ const BudgetRequestsSent = () => {
       label: "Ver respuesta", // Etiqueta para el tooltip si se usa
       icon: "fas fa-eye",
       className: "btn-view", // Clase consistente
-      onClick: handleViewResponse
+      onClick: handleViewResponse,
     },
     {
       key: "pdf",
       label: "Descargar PDF", // Etiqueta genérica
-      icon: (row) => generatedPDFs.has(row._id) ? "fas fa-file-alt" : "fas fa-file-pdf", // Intento de dinamismo
-      className: (row) => generatedPDFs.has(row._id) ? "btn-view" : "btn-pdf", // Intento de dinamismo
-      onClick: (req) => handleGeneratePDF(req)
+      icon: (row) =>
+        generatedPDFs.has(row._id) ? "fas fa-file-alt" : "fas fa-file-pdf", // Intento de dinamismo
+      className: (row) => (generatedPDFs.has(row._id) ? "btn-view" : "btn-pdf"), // Intento de dinamismo
+      onClick: (req) => handleGeneratePDF(req),
     },
     // No hay acción de eliminar
   ];
   // --- FIN MODIFICACIÓN ---
-
 
   if (loading) {
     return (
@@ -407,7 +424,12 @@ const BudgetRequestsSent = () => {
                 <>
                   <p>{responseModal.message}</p>
                   <div className="modal-actions">
-                    <button type="button" onClick={() => setResponseModal(null)}>Cancelar</button>
+                    <button
+                      type="button"
+                      onClick={() => setResponseModal(null)}
+                    >
+                      Cancelar
+                    </button>
                     <button
                       className="btn-accept"
                       onClick={() => {
@@ -424,11 +446,24 @@ const BudgetRequestsSent = () => {
                 </>
               ) : (
                 <>
-                  <p><strong>Mensaje:</strong> {responseModal.response.message}</p>
-                  <p><strong>Presupuesto:</strong> ${responseModal.response.budget?.toFixed(2)}</p>
-                  <p><strong>Tiempo estimado:</strong> {responseModal.response.estimatedTime}</p>
+                  <p>
+                    <strong>Mensaje:</strong> {responseModal.response.message}
+                  </p>
+                  <p>
+                    <strong>Presupuesto:</strong> $
+                    {responseModal.response.budget?.toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Tiempo estimado:</strong>{" "}
+                    {responseModal.response.estimatedTime}
+                  </p>
                   <div className="modal-actions">
-                    <button type="button" onClick={() => setResponseModal(null)}>Cerrar</button>
+                    <button
+                      type="button"
+                      onClick={() => setResponseModal(null)}
+                    >
+                      Cerrar
+                    </button>
                     <button
                       className="btn-chat"
                       onClick={() => handleOpenChatModal(responseModal)}
@@ -468,8 +503,12 @@ const BudgetRequestsSent = () => {
                 />
               </div>
               <div className="modal-actions">
-                <button type="button" onClick={() => setChatModal(null)}>Cancelar</button>
-                <button className="btn-send" onClick={handleStartChat}>Iniciar conversación</button>
+                <button type="button" onClick={() => setChatModal(null)}>
+                  Cancelar
+                </button>
+                <button className="btn-send" onClick={handleStartChat}>
+                  Iniciar conversación
+                </button>
               </div>
             </div>
           </Modal>
@@ -520,7 +559,9 @@ const BudgetRequestsSent = () => {
               <>
                 <p>{responseModal.message}</p>
                 <div className="modal-actions">
-                  <button type="button" onClick={() => setResponseModal(null)}>Cancelar</button>
+                  <button type="button" onClick={() => setResponseModal(null)}>
+                    Cancelar
+                  </button>
                   <button
                     className="btn-accept"
                     onClick={() => {
@@ -537,11 +578,21 @@ const BudgetRequestsSent = () => {
               </>
             ) : (
               <>
-                <p><strong>Mensaje:</strong> {responseModal.response.message}</p>
-                <p><strong>Presupuesto:</strong> ${responseModal.response.budget?.toFixed(2)}</p>
-                <p><strong>Tiempo estimado:</strong> {responseModal.response.estimatedTime}</p>
+                <p>
+                  <strong>Mensaje:</strong> {responseModal.response.message}
+                </p>
+                <p>
+                  <strong>Presupuesto:</strong> $
+                  {responseModal.response.budget?.toFixed(2)}
+                </p>
+                <p>
+                  <strong>Tiempo estimado:</strong>{" "}
+                  {responseModal.response.estimatedTime}
+                </p>
                 <div className="modal-actions">
-                  <button type="button" onClick={() => setResponseModal(null)}>Cerrar</button>
+                  <button type="button" onClick={() => setResponseModal(null)}>
+                    Cerrar
+                  </button>
                   <button
                     className="btn-chat"
                     onClick={() => handleOpenChatModal(responseModal)}
@@ -581,8 +632,12 @@ const BudgetRequestsSent = () => {
               />
             </div>
             <div className="modal-actions">
-              <button type="button" onClick={() => setChatModal(null)}>Cancelar</button>
-              <button className="btn-send" onClick={handleStartChat}>Iniciar conversación</button>
+              <button type="button" onClick={() => setChatModal(null)}>
+                Cancelar
+              </button>
+              <button className="btn-send" onClick={handleStartChat}>
+                Iniciar conversación
+              </button>
             </div>
           </div>
         </Modal>

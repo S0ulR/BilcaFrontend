@@ -5,11 +5,19 @@ import { useContext } from "react";
 import API from "../../services/api";
 import "./RequestCard.css";
 
-const RequestCard = ({ request, onRespond, onViewResponse, onDelete, onGeneratePDF, hasGeneratedPDF }) => {
+const RequestCard = ({
+  request,
+  onRespond,
+  onViewResponse,
+  onDelete,
+  onGeneratePDF,
+  hasGeneratedPDF,
+}) => {
   const { success, error } = useContext(ToastContext);
   const [expanded, setExpanded] = useState(false);
-  const isReceived = request.client; // Verifica si es una solicitud recibida (cliente -> trabajador)
-  const user = isReceived ? request.client : request.worker;
+  // ✅ Determinar si es una solicitud enviada (cliente) o recibida (trabajador)
+  const isReceived = request.client; // Si request.client existe, es una solicitud recibida
+  const user = isReceived ? request.client : request.worker; // ✅ El "usuario" es el cliente si es recibida, sino el trabajador
   const isPending = request.status === "pendiente";
   const isResponded = request.status === "respondido";
 
@@ -34,17 +42,25 @@ const RequestCard = ({ request, onRespond, onViewResponse, onDelete, onGenerateP
   return (
     <div className={`request-card ${expanded ? "expanded" : ""}`}>
       <div className="user-header" onClick={() => setExpanded(!expanded)}>
+        {/* ✅ La foto ahora es más pequeña y está alineada a la izquierda */}
         <img
           src={user.photo || "/assets/default-avatar.png"}
           alt={user.name}
-          className="user-photo"
+          className="user-photo-small" // ✅ Nueva clase para una foto más pequeña
           onError={(e) => (e.target.src = "/assets/default-avatar.png")}
         />
-        <div>
-          <strong>{user.name}</strong>
-          <div className="profession">{request.profession}</div>
+        <div className="user-info">
+          {/* ✅ El nombre es ahora el elemento principal */}
+          <strong className="user-name">{user.name}</strong>
+          <div className="user-role">
+            {/* ✅ Mostrar "Cliente:" o "Trabajador:" según el contexto */}
+            {isReceived ? "Cliente:" : "Trabajador:"}{" "}
+            <span className="profession">{request.profession}</span>
+          </div>
         </div>
-        <i className={`fas fa-chevron-${expanded ? "up" : "down"} toggle-icon`}></i>
+        <i
+          className={`fas fa-chevron-${expanded ? "up" : "down"} toggle-icon`}
+        ></i>
       </div>
 
       <div className={`card-body ${expanded ? "expanded" : "collapsed"}`}>
@@ -62,16 +78,19 @@ const RequestCard = ({ request, onRespond, onViewResponse, onDelete, onGenerateP
         </p>
 
         <p>
-          <strong>Fecha:</strong> {new Date(request.createdAt).toLocaleDateString()}
+          <strong>Fecha:</strong>{" "}
+          {new Date(request.createdAt).toLocaleDateString()}
         </p>
 
         {request.response && expanded && (
           <>
             <p>
-              <strong>Mensaje del presupuesto:</strong> {request.response.message}
+              <strong>Mensaje del presupuesto:</strong>{" "}
+              {request.response.message}
             </p>
             <p>
-              <strong>Presupuesto:</strong> ${request.response.budget?.toFixed(2)}
+              <strong>Presupuesto:</strong> $
+              {request.response.budget?.toFixed(2)}
             </p>
             <p>
               <strong>Tiempo estimado:</strong> {request.response.estimatedTime}
@@ -88,13 +107,19 @@ const RequestCard = ({ request, onRespond, onViewResponse, onDelete, onGenerateP
 
         <div className="card-actions">
           {isPending && (
-            <button className="btn-card-action btn-primary" onClick={() => onRespond?.(request)}>
+            <button
+              className="btn-card-action btn-primary"
+              onClick={() => onRespond?.(request)}
+            >
               <i className="fas fa-reply"></i> Responder
             </button>
           )}
 
           {isResponded && !isReceived && (
-            <button className="btn-card-action btn-outline" onClick={() => onViewResponse?.(request)}>
+            <button
+              className="btn-card-action btn-outline"
+              onClick={() => onViewResponse?.(request)}
+            >
               <i className="fas fa-eye"></i> Ver respuesta
             </button>
           )}
@@ -102,18 +127,24 @@ const RequestCard = ({ request, onRespond, onViewResponse, onDelete, onGenerateP
           {/* Botón de PDF - Solo para solicitudes recibidas (trabajador ve) */}
           {isReceived && (
             <button
-              className={`btn-card-action ${hasGeneratedPDF ? "btn-view" : "btn-pdf"}`}
+              className={`btn-card-action ${
+                hasGeneratedPDF ? "btn-view" : "btn-pdf"
+              }`}
               onClick={handleGeneratePDF}
-              aria-label={hasGeneratedPDF ? "Ver presupuesto en PDF" : "Generar presupuesto en PDF"}
+              aria-label={
+                hasGeneratedPDF
+                  ? "Ver presupuesto en PDF"
+                  : "Generar presupuesto en PDF"
+              }
             >
-              <i className={`fas ${hasGeneratedPDF ? "fa-file-alt" : "fa-file-pdf"}`}></i>
+              <i
+                className={`fas ${
+                  hasGeneratedPDF ? "fa-file-alt" : "fa-file-pdf"
+                }`}
+              ></i>
               {hasGeneratedPDF ? "Ver PDF" : "PDF"}
             </button>
           )}
-
-          <button className="btn-card-action btn-delete" onClick={handleDelete}>
-            <i className="fas fa-trash-alt"></i> Eliminar
-          </button>
         </div>
       </div>
     </div>

@@ -1,10 +1,9 @@
 // src/components/dashboard/ContractForm.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { generateContractPDF } from "../../utils/generateContractPDF";
 import { ToastContext } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthProvider";
-import { useContext } from "react";
 import API from "../../services/api";
 import Breadcrumb from "../ui/Breadcrumb";
 import "./ContractForm.css";
@@ -30,7 +29,7 @@ const ContractForm = () => {
   const [pendingContract, setPendingContract] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [sendingContract, setSendingContract] = useState(false); // Nuevo estado
+  const [sendingContract, setSendingContract] = useState(false); // Para el botón de enviar contrato
 
   useEffect(() => {
     const saved = sessionStorage.getItem("pendingContract");
@@ -58,12 +57,23 @@ const ContractForm = () => {
   };
 
   const handlePreview = () => {
-    if (!formData.service || !formData.totalAmount || !formData.startDate || !formData.endDate) {
-      return error("Campos faltantes", "Completa todos los campos obligatorios.");
+    if (
+      !formData.service ||
+      !formData.totalAmount ||
+      !formData.startDate ||
+      !formData.endDate
+    ) {
+      return error(
+        "Campos faltantes",
+        "Completa todos los campos obligatorios."
+      );
     }
     const totalAmount = parseFloat(formData.totalAmount);
     if (isNaN(totalAmount)) {
-      return error("Monto inválido", "El monto total debe ser un número válido.");
+      return error(
+        "Monto inválido",
+        "El monto total debe ser un número válido."
+      );
     }
     setShowPreview(true);
   };
@@ -71,7 +81,10 @@ const ContractForm = () => {
   const handleSubmit = () => {
     const totalAmount = parseFloat(formData.totalAmount);
     if (isNaN(totalAmount)) {
-      return error("Monto inválido", "El monto total debe ser un número válido.");
+      return error(
+        "Monto inválido",
+        "El monto total debe ser un número válido."
+      );
     }
     const data = {
       date: new Date().toLocaleDateString(),
@@ -92,134 +105,117 @@ const ContractForm = () => {
     }
   };
 
-  const handleSendByEmail = async () => {
+  // Nueva función combinada
+  const handleSendContractAndEmail = async () => {
     if (!formData.clientEmail) {
       return error("Falta email", "Agrega el email del cliente para enviarlo.");
     }
     if (!formData.service || !formData.totalAmount) {
-      return error("Datos incompletos", "Ingresa servicio y monto para continuar.");
+      return error(
+        "Datos incompletos",
+        "Ingresa servicio y monto para continuar."
+      );
     }
-    setLoading(true);
+
+    const totalAmount = parseFloat(formData.totalAmount);
+    if (isNaN(totalAmount)) {
+      return error(
+        "Monto inválido",
+        "El monto total debe ser un número válido."
+      );
+    }
+
+    setSendingContract(true);
+
     try {
-      const totalAmount = parseFloat(formData.totalAmount);
-      if (isNaN(totalAmount)) {
-        return error("Monto inválido", "El monto total debe ser un número válido.");
-      }
-      const data = {
-        date: new Date().toLocaleDateString(),
-        client: { name: formData.clientName, email: formData.clientEmail },
-        worker: { name: user?.name },
+      // 1. CREAR LA CONTRATACIÓN (Paso principal)
+      const hireData = {
+        worker: location.state?.workerId,
+        client: user._id.trim(),
         service: formData.service,
         description: formData.description,
-        hourlyRate: formData.hourlyRate || "N/A",
-        totalAmount: totalAmount.toFixed(2),
+        budget: totalAmount,
+        status: "pendiente",
         startDate: formData.startDate,
         endDate: formData.endDate,
       };
-      const { jsPDF } = await import("jspdf");
-      await import("jspdf-autotable");
-      const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text("Contrato de Servicio", 14, 22);
-      doc.setFontSize(12);
-      doc.text(`Fecha: ${data.date}`, 14, 32);
-      doc.autoTable({ startY: 40, head: [["Cliente", "Email"]], body: [[data.client.name, data.client.email]] });
-      const y = doc.lastAutoTable.finalY + 10;
-      doc.text(`Servicio: ${data.service}`, 14, y);
-      doc.text(`Monto total: $${data.totalAmount}`, 14, y + 10);
-      const pdfArrayBuffer = doc.output("arraybuffer");
-      const pdfBlob = new Blob([pdfArrayBuffer], { type: "application/pdf" });
-      const fileName = `contrato_${data.client.name}_${data.service}_${new Date().toISOString().slice(0, 10)}.pdf`;
-      const formDataToSend = new FormData();
-      formDataToSend.append("to", data.client.email);
-      formDataToSend.append("subject", `Contrato para ${data.service}`);
-      formDataToSend.append("html", `<p>Hola ${data.client.name},</p><p>Adjunto encontrarás el contrato solicitado por <strong>${data.service}</strong>.</p><p><strong>Monto total: $${data.totalAmount}</strong></p>`);
-      formDataToSend.append("attachment", pdfBlob, fileName);
-      await API.post("/documents/send-email", formDataToSend, { headers: { "Content-Type": "multipart/form-data" } });
-      success("Enviado", `Contrato enviado a ${data.client.email}`);
-    } catch (err) {
-      console.error("Error al enviar contrato por email:", err);
-      error("Error", "No se pudo enviar el contrato por email.");
-    } finally {
-      setLoading(false);
-      setShowPreview(false);
-    }
-  };
-
-  const handleSendByMessage = async () => {
-    if (!formData.clientEmail) {
-      return error("Falta email", "Agrega el email del cliente para enviarlo.");
-    }
-    if (!formData.service || !formData.totalAmount) {
-      return error("Datos incompletos", "Ingresa servicio y monto para continuar.");
-    }
-    try {
-      await API.post("/messages/send", {
-        recipient: pendingContract?.workerId,
-        content: `Te envío un contrato para "${formData.service}" por $${formData.totalAmount}.`,
-      });
-      success("Enviado", `Contrato enviado a ${formData.clientName}`);
-      if (pendingContract) {
-        await markAsHired(pendingContract.workerId, { totalAmount: formData.totalAmount });
-      }
-    } catch (err) {
-      error("No se pudo enviar", "Hubo un error al enviar el mensaje.");
-    }
-  };
-
-  // Nueva función para crear la contratación y notificar al trabajador
-  const handleSendContract = async () => {
-    setSendingContract(true);
-    try {
-      // 1. Crear la contratación
-      const hireData = {
-        worker: location.state?.workerId, // El ID del trabajador desde location.state
-        client: user._id.trim(), // El ID del cliente actual
-        service: formData.service,
-        description: formData.description,
-        budget: parseFloat(formData.totalAmount),
-        status: "pendiente", // Estado inicial
-      };
 
       const hireResponse = await API.post("/hires/create", hireData);
-      success("Contratación creada", "El contrato ha sido enviado al trabajador.");
+      // ✅ La contratación se ha creado con éxito
 
-      // 2. Opcional: Enviar notificación por email al trabajador (esto depende de tu backend)
-      // await API.post("/notifications/send-hire", { hireId: hireResponse.data.hire._id });
+      // 2. INTENTAR ENVIAR POR EMAIL (Paso secundario, no bloqueante)
+      try {
+        // Generar PDF
+        const { jsPDF } = await import("jspdf");
+        await import("jspdf-autotable");
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text("Contrato de Servicio", 14, 22);
+        doc.setFontSize(12);
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 32);
+        doc.autoTable({
+          startY: 40,
+          head: [["Cliente", "Email"]],
+          body: [[formData.clientName, formData.clientEmail]],
+        });
+        const y = doc.lastAutoTable.finalY + 10;
+        doc.text(`Servicio: ${formData.service}`, 14, y);
+        doc.text(`Monto total: $${totalAmount.toFixed(2)}`, 14, y + 10);
 
-      // 3. Limpiar el estado y redirigir
+        const pdfArrayBuffer = doc.output("arraybuffer");
+        const pdfBlob = new Blob([pdfArrayBuffer], { type: "application/pdf" });
+        const fileName = `contrato_${formData.clientName}_${
+          formData.service
+        }_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+        const formDataToSend = new FormData();
+        formDataToSend.append("to", formData.clientEmail);
+        formDataToSend.append("subject", `Contrato para ${formData.service}`);
+        formDataToSend.append(
+          "html",
+          `<p>Hola ${
+            formData.clientName
+          },</p><p>Adjunto encontrarás el contrato solicitado por <strong>${
+            formData.service
+          }</strong>.</p><p><strong>Monto total: $${totalAmount.toFixed(
+            2
+          )}</strong></p>`
+        );
+        formDataToSend.append("attachment", pdfBlob, fileName);
+
+        await API.post("/documents/send-email", formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        success(
+          "Contrato enviado",
+          `La contratación fue creada y el contrato enviado a ${formData.clientEmail}.`
+        );
+      } catch (emailError) {
+        console.error("Error al enviar email (no bloqueante):", emailError);
+        // ✅ La contratación ya se creó, así que informamos al usuario y continuamos
+        success(
+          "Contratación creada",
+          "La contratación fue creada exitosamente. El envío del email falló, pero el trabajador recibirá la notificación en la app."
+        );
+      }
+
+      // 3. Limpiar y redirigir
       sessionStorage.removeItem("pendingContract");
-      navigate("/dashboard/hires/user"); // Redirigir a la lista de contrataciones del cliente
-
+      navigate("/dashboard/hires/user");
     } catch (err) {
+      // ❌ Error al crear la contratación
       console.error("Error al crear contratación:", err);
-      error("Error", err.response?.data?.msg || "No se pudo crear la contratación.");
+      error(
+        "Error",
+        err.response?.data?.msg || "No se pudo crear la contratación."
+      );
     } finally {
       setSendingContract(false);
     }
   };
 
-  const markAsHired = async (workerId, contractData) => {
-    try {
-      const hireData = {
-        worker: workerId,
-        client: user._id.trim(),
-        service: contractData.service,
-        description: contractData.description,
-        budget: parseFloat(contractData.totalAmount),
-        status: "pendiente",
-      };
-      await API.post("/hires/create", hireData);
-      sessionStorage.removeItem("pendingContract");
-      success("Contratación enviada", "La solicitud fue creada exitosamente.");
-      navigate("/dashboard/hires/user");
-    } catch (err) {
-      console.error("Error al crear contratación:", err);
-      error("Error", "No se pudo crear la contratación.");
-    }
-  };
-
   const renderPreview = () => {
+    const totalAmount = parseFloat(formData.totalAmount).toFixed(2);
     return (
       <div className="contract-preview">
         <h3>Vista previa del contrato</h3>
@@ -229,48 +225,64 @@ const ContractForm = () => {
             <p>Fecha: {new Date().toLocaleDateString()}</p>
           </div>
           <div className="preview-client">
-            <p><strong>Cliente:</strong> {formData.clientName}</p>
-            <p><strong>Email:</strong> {formData.clientEmail}</p>
+            <p>
+              <strong>Cliente:</strong> {formData.clientName}
+            </p>
+            <p>
+              <strong>Email:</strong> {formData.clientEmail}
+            </p>
           </div>
           <div className="preview-worker">
-            <p><strong>Trabajador:</strong> {user?.name}</p>
+            <p>
+              <strong>Trabajador:</strong> {user?.name}
+            </p>
           </div>
           <div className="preview-details">
-            <p><strong>Servicio:</strong> {formData.service}</p>
-            <p><strong>Descripción:</strong> {formData.description || "N/A"}</p>
-            <p><strong>Tarifa por hora:</strong> ${formData.hourlyRate || "N/A"}</p>
-            <p><strong>Monto total:</strong> ${formData.totalAmount}</p>
-            <p><strong>Duración:</strong> {formData.startDate} a {formData.endDate}</p>
+            <p>
+              <strong>Servicio:</strong> {formData.service}
+            </p>
+            <p>
+              <strong>Descripción:</strong> {formData.description || "N/A"}
+            </p>
+            <p>
+              <strong>Tarifa por hora:</strong> ${formData.hourlyRate || "N/A"}
+            </p>
+            <p>
+              <strong>Monto total:</strong> ${totalAmount}
+            </p>
+            <p>
+              <strong>Duración:</strong> {formData.startDate} a{" "}
+              {formData.endDate}
+            </p>
           </div>
         </div>
         <div className="form-actions">
           <button type="button" onClick={handleSubmit} className="btn-download">
             <i className="fas fa-file-contract"></i> Descargar PDF
           </button>
-          <button type="button" onClick={handleSendByEmail} className="btn-send" disabled={loading}>
-            {loading ? (
-              <>
-                <i className="fas fa-spinner fa-spin"></i> Enviando...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-envelope"></i> Enviar por email
-              </>
-            )}
-          </button>
-          {/* Nuevo botón para enviar contrato */}
-          <button type="button" onClick={handleSendContract} className="btn-send" disabled={sendingContract}>
+          {/* ✅ Botón unificado que hace ambas acciones */}
+          <button
+            type="button"
+            onClick={handleSendContractAndEmail}
+            className="btn-send"
+            disabled={sendingContract}
+          >
             {sendingContract ? (
               <>
                 <i className="fas fa-spinner fa-spin"></i> Enviando...
               </>
             ) : (
               <>
-                <i className="fas fa-paper-plane"></i> Enviar contrato al trabajador
+                <i className="fas fa-paper-plane"></i> Enviar contrato al
+                trabajador
               </>
             )}
           </button>
-          <button type="button" onClick={() => setShowPreview(false)} className="btn-cancel">
+          <button
+            type="button"
+            onClick={() => setShowPreview(false)}
+            className="btn-cancel"
+          >
             Cancelar
           </button>
         </div>
@@ -302,15 +314,18 @@ const ContractForm = () => {
           { label: "Generar Contrato", active: true },
         ]}
       />
-
       <div className="welcome-card">
         <h1>Generar Contrato de Servicio</h1>
         <p>
-          Formaliza tu acuerdo con clientes o trabajadores con un contrato claro y profesional.
+          Formaliza tu acuerdo con clientes o trabajadores con un contrato claro
+          y profesional.
         </p>
       </div>
-
-      <form onSubmit={(e) => { e.preventDefault(); }}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+      >
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="clientName">Nombre del cliente *</label>
@@ -336,7 +351,6 @@ const ContractForm = () => {
             />
           </div>
         </div>
-
         <div className="form-group">
           <label htmlFor="service">Servicio *</label>
           <input
@@ -348,7 +362,6 @@ const ContractForm = () => {
             required
           />
         </div>
-
         <div className="form-group">
           <label htmlFor="description">Descripción del servicio</label>
           <textarea
@@ -360,7 +373,6 @@ const ContractForm = () => {
             rows="4"
           />
         </div>
-
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="hourlyRate">Tarifa por hora (opcional)</label>
@@ -390,7 +402,6 @@ const ContractForm = () => {
             />
           </div>
         </div>
-
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="startDate">Fecha de inicio *</label>
@@ -415,7 +426,6 @@ const ContractForm = () => {
             />
           </div>
         </div>
-
         <div className="form-actions">
           <button type="button" onClick={handlePreview} className="btn-preview">
             <i className="fas fa-eye"></i> Vista Previa

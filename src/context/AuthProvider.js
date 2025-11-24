@@ -1,5 +1,11 @@
 // src/context/AuthProvider.js
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
@@ -15,38 +21,55 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
-  const [sessionId, setSessionId] = useState(null); 
-  const [inactivityTimeout, setInactivityTimeout] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const inactivityTimeoutRef = useRef(null); // ✅ Usar useRef en lugar de useState
   const navigate = useNavigate();
 
   // Reiniciar temporizador de inactividad
   const resetInactivityTimer = () => {
-    if (inactivityTimeout) clearTimeout(inactivityTimeout);
-    const timer = setTimeout(() => {
-      alert("Sesión cerrada por inactividad. Por seguridad, por favor vuelve a iniciar sesión.");
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+    inactivityTimeoutRef.current = setTimeout(() => {
+      alert(
+        "Sesión cerrada por inactividad. Por seguridad, por favor vuelve a iniciar sesión."
+      );
       handleLogout();
     }, 24 * 60 * 60 * 1000); // 24 horas
-    setInactivityTimeout(timer);
   };
 
   // Escuchar eventos de inactividad
   useEffect(() => {
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click", "keydown"];
-    events.forEach((event) => window.addEventListener(event, resetInactivityTimer));
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+      "click",
+      "keydown",
+    ];
+    events.forEach((event) =>
+      window.addEventListener(event, resetInactivityTimer)
+    );
     resetInactivityTimer(); // Iniciar el temporizador al cargar
 
     return () => {
-      events.forEach((event) => window.removeEventListener(event, resetInactivityTimer));
-      if (inactivityTimeout) clearTimeout(inactivityTimeout);
+      events.forEach((event) =>
+        window.removeEventListener(event, resetInactivityTimer)
+      );
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
     };
-  }, [inactivityTimeout]);
+  }, []); // ✅ Dependencias vacías para que solo se ejecute al montar
 
-  // Verificar sesión guardada
+  // Verificar sesión guardada - ✅ Se ejecuta SOLO una vez
   useEffect(() => {
     const checkSession = async () => {
       const token = sessionStorage.getItem("token");
       const userStr = sessionStorage.getItem("user");
-      const sid = sessionStorage.getItem("sessionId"); 
+      const sid = sessionStorage.getItem("sessionId");
 
       if (token && userStr && sid) {
         try {
@@ -59,18 +82,19 @@ export const AuthProvider = ({ children }) => {
           const parsedUser = JSON.parse(userStr);
           setUser(parsedUser);
           setToken(token);
-          setSessionId(sid); 
+          setSessionId(sid);
         } catch (err) {
+          console.error("Error al validar sesión:", err);
           sessionStorage.removeItem("token");
           sessionStorage.removeItem("user");
-          sessionStorage.removeItem("sessionId"); 
+          sessionStorage.removeItem("sessionId");
         }
       }
       setLoading(false);
     };
 
     checkSession();
-  }, []);
+  }, []); // ✅ Dependencias vacías para que solo se ejecute al montar
 
   const login = (userData, token, sessionId) => {
     sessionStorage.setItem("token", token);
@@ -78,15 +102,24 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.setItem("sessionId", sessionId);
     setUser(userData);
     setToken(token);
-    setSessionId(sessionId); 
+    setSessionId(sessionId);
   };
 
   const handleLogout = () => {
     // Hacer logout en backend
     if (token) {
-      API.post('/auth/logout', {}, {
-        headers: { Authorization: `Bearer ${token}`, "x-session-id": sessionId }
-      }).catch(err => console.error("Error al cerrar sesión en backend:", err));
+      API.post(
+        "/auth/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-session-id": sessionId,
+          },
+        }
+      ).catch((err) =>
+        console.error("Error al cerrar sesión en backend:", err)
+      );
     }
 
     sessionStorage.removeItem("token");
@@ -94,8 +127,10 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem("sessionId");
     setUser(null);
     setToken(null);
-    setSessionId(null); 
-    if (inactivityTimeout) clearTimeout(inactivityTimeout);
+    setSessionId(null);
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
     navigate("/", { replace: true });
   };
 
@@ -104,7 +139,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, sessionId }}> 
+    <AuthContext.Provider value={{ user, loading, login, logout, sessionId }}>
       {!loading ? children : null}
     </AuthContext.Provider>
   );

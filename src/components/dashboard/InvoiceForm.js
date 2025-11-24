@@ -64,7 +64,10 @@ const InvoiceForm = () => {
 
   const handlePreview = () => {
     if (!formData.clientName || !formData.clientEmail) {
-      return error("Cliente faltante", "Completa el nombre y email del cliente.");
+      return error(
+        "Cliente faltante",
+        "Completa el nombre y email del cliente."
+      );
     }
 
     if (items.some((item) => !item.description)) {
@@ -82,8 +85,11 @@ const InvoiceForm = () => {
       invoiceNumber: formData.invoiceNumber,
       date: new Date().toLocaleDateString(),
       client: { name: formData.clientName, email: formData.clientEmail },
-      worker: { name: user?.name, profession: user?.professions?.[0] || "Trabajador" },
-      items: items.map(item => ({
+      worker: {
+        name: user?.name,
+        profession: user?.services?.[0]?.profession || "Trabajador",
+      }, // ✅ Obtener datos del usuario logueado
+      items: items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
         rate: item.rate,
@@ -115,8 +121,11 @@ const InvoiceForm = () => {
       invoiceNumber: formData.invoiceNumber,
       date: new Date().toLocaleDateString(),
       client: { name: formData.clientName, email: formData.clientEmail },
-      worker: { name: user?.name, profession: user?.professions?.[0] || "Trabajador" },
-      items: items.map(item => ({
+      worker: {
+        name: user?.name,
+        profession: user?.professions?.[0] || "Trabajador",
+      }, // ✅ Obtener datos del usuario logueado
+      items: items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
         rate: item.rate,
@@ -184,14 +193,21 @@ const InvoiceForm = () => {
         const finalY3 = doc.lastAutoTable.finalY;
         doc.setFontSize(12);
         doc.text(`Subtotal: $${data.subtotal}`, 140, finalY3 + 10);
-        doc.text(`IVA (${data.taxRate}%): $${data.taxAmount}`, 140, finalY3 + 20);
+        doc.text(
+          `IVA (${data.taxRate}%): $${data.taxAmount}`,
+          140,
+          finalY3 + 20
+        );
         doc.text(`Total: $${data.totalAmount}`, 140, finalY3 + 30);
         doc.setFontSize(11);
         doc.text("Gracias por su pago.", 14, finalY3 + 40);
 
         pdfBlob = doc.output("blob");
       } catch (pdfError) {
-        console.warn("⚠️ No se pudo generar PDF, se enviará sin adjunto:", pdfError);
+        console.warn(
+          "⚠️ No se pudo generar PDF, se enviará sin adjunto:",
+          pdfError
+        );
       }
 
       // 🔹 Crear datos del formulario
@@ -238,11 +254,17 @@ const InvoiceForm = () => {
           <p>Fecha: {new Date().toLocaleDateString()}</p>
         </div>
         <div className="preview-client">
-          <p><strong>Cliente:</strong> {formData.clientName}</p>
-          <p><strong>Email:</strong> {formData.clientEmail}</p>
+          <p>
+            <strong>Cliente:</strong> {formData.clientName}
+          </p>
+          <p>
+            <strong>Email:</strong> {formData.clientEmail}
+          </p>
         </div>
         <div className="preview-worker">
-          <p><strong>Trabajador:</strong> {user?.name}</p>
+          <p>
+            <strong>Trabajador:</strong> {user?.name}
+          </p>
         </div>
         <table className="preview-table">
           <thead>
@@ -265,9 +287,16 @@ const InvoiceForm = () => {
           </tbody>
         </table>
         <div className="preview-totals">
-          <p><strong>Subtotal:</strong> ${subtotal.toFixed(2)}</p>
-          <p><strong>Impuesto ({formData.taxRate}%):</strong> ${taxAmount.toFixed(2)}</p>
-          <p><strong>Total:</strong> ${totalAmount.toFixed(2)}</p>
+          <p>
+            <strong>Subtotal:</strong> ${subtotal.toFixed(2)}
+          </p>
+          <p>
+            <strong>Impuesto ({formData.taxRate}%):</strong> $
+            {taxAmount.toFixed(2)}
+          </p>
+          <p>
+            <strong>Total:</strong> ${totalAmount.toFixed(2)}
+          </p>
         </div>
       </div>
 
@@ -275,7 +304,12 @@ const InvoiceForm = () => {
         <button type="button" onClick={handleSubmit} className="btn-download">
           <i className="fas fa-receipt"></i> Descargar PDF
         </button>
-        <button type="button" onClick={handleSendByEmail} className="btn-send" disabled={loading}>
+        <button
+          type="button"
+          onClick={handleSendByEmail}
+          className="btn-send"
+          disabled={loading}
+        >
           {loading ? (
             <>
               <i className="fas fa-spinner fa-spin"></i> Enviando...
@@ -286,7 +320,11 @@ const InvoiceForm = () => {
             </>
           )}
         </button>
-        <button type="button" onClick={() => setShowPreview(false)} className="btn-cancel">
+        <button
+          type="button"
+          onClick={() => setShowPreview(false)}
+          className="btn-cancel"
+        >
           Cancelar
         </button>
       </div>
@@ -320,7 +358,10 @@ const InvoiceForm = () => {
 
       <div className="welcome-card">
         <h1>Generar Factura</h1>
-        <p>Emite facturas profesionales por servicios prestados. Agrega ítems, impuestos y envíalas fácilmente.</p>
+        <p>
+          Emite facturas profesionales por servicios prestados. Agrega ítems,
+          impuestos y envíalas fácilmente.
+        </p>
       </div>
 
       <form onSubmit={(e) => e.preventDefault()}>
@@ -394,7 +435,9 @@ const InvoiceForm = () => {
                     type="text"
                     placeholder="Servicio"
                     value={item.description}
-                    onChange={(e) => updateItem(index, "description", e.target.value)}
+                    onChange={(e) =>
+                      updateItem(index, "description", e.target.value)
+                    }
                     required
                   />
                 </td>
@@ -403,7 +446,11 @@ const InvoiceForm = () => {
                     type="number"
                     value={item.quantity}
                     onChange={(e) =>
-                      updateItem(index, "quantity", parseFloat(e.target.value) || 0)
+                      updateItem(
+                        index,
+                        "quantity",
+                        parseFloat(e.target.value) || 0
+                      )
                     }
                     min="1"
                     required
@@ -422,7 +469,11 @@ const InvoiceForm = () => {
                 </td>
                 <td>${parseFloat(item.amount).toFixed(2)}</td>
                 <td>
-                  <button type="button" onClick={() => removeItem(index)} className="btn-remove">
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    className="btn-remove"
+                  >
                     <i className="fas fa-trash"></i>
                   </button>
                 </td>
@@ -440,7 +491,8 @@ const InvoiceForm = () => {
             Subtotal: <strong>${subtotal.toFixed(2)}</strong>
           </div>
           <div>
-            Impuesto ({formData.taxRate}%): <strong>${taxAmount.toFixed(2)}</strong>
+            Impuesto ({formData.taxRate}%):{" "}
+            <strong>${taxAmount.toFixed(2)}</strong>
           </div>
           <div className="total">
             Total: <strong>${totalAmount.toFixed(2)}</strong>

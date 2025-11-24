@@ -14,9 +14,10 @@ const BudgetForm = () => {
   const { success, error } = useContext(ToastContext);
   const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
 
+  // ✅ Estado inicial: clientEmail ahora se inicializa desde location.state
   const [formData, setFormData] = useState({
     clientName: "",
-    clientEmail: "",
+    clientEmail: "", // Inicialmente vacío, se llenará con useEffect
     service: "",
     description: "",
     hourlyRate: "",
@@ -25,8 +26,10 @@ const BudgetForm = () => {
   });
 
   const [showPreview, setShowPreview] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Para el botón de envío por email
+  const [sendingMessage, setSendingMessage] = useState(false); // Para el botón de mensaje
 
+  // ✅ Cargar datos desde location.state si existen
   useEffect(() => {
     if (location.state) {
       const { clientName, clientEmail, service, description } = location.state;
@@ -34,7 +37,7 @@ const BudgetForm = () => {
       setFormData((prev) => ({
         ...prev,
         clientName: clientName || prev.clientName,
-        clientEmail: clientEmail || prev.clientEmail,
+        clientEmail: clientEmail || prev.clientEmail, // ✅ Se carga el email aquí
         service: service || prev.service,
         description: description || prev.description,
       }));
@@ -49,20 +52,39 @@ const BudgetForm = () => {
   const calculateTotals = () => {
     const totalAmount =
       formData.hourlyRate && formData.hours
-        ? (parseFloat(formData.hourlyRate) * parseFloat(formData.hours)).toFixed(2)
+        ? (
+            parseFloat(formData.hourlyRate) * parseFloat(formData.hours)
+          ).toFixed(2)
         : "0.00";
     return { totalAmount };
   };
 
   const handlePreview = () => {
     if (!formData.clientName || !formData.clientEmail || !formData.validUntil) {
-      return error("Campos requeridos", "Completa todos los campos obligatorios.");
+      return error(
+        "Campos requeridos",
+        "Completa todos los campos obligatorios."
+      );
+    }
+    const totalAmount = parseFloat(calculateTotals().totalAmount);
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+      return error(
+        "Monto inválido",
+        "El monto total debe ser un número positivo."
+      );
     }
     setShowPreview(true);
   };
 
   const handleSubmit = () => {
     const { totalAmount } = calculateTotals();
+    const numTotalAmount = parseFloat(totalAmount);
+    if (isNaN(numTotalAmount) || numTotalAmount <= 0) {
+      return error(
+        "Monto inválido",
+        "El monto total debe ser un número positivo."
+      );
+    }
 
     const data = {
       date: new Date().toLocaleDateString("es-AR"),
@@ -102,8 +124,11 @@ const BudgetForm = () => {
     }
 
     const { totalAmount } = calculateTotals();
-    if (!totalAmount || totalAmount === "0.00") {
-      return error("Datos incompletos", "Ingresa tarifa y horas para calcular el total.");
+    if (!totalAmount || parseFloat(totalAmount) <= 0) {
+      return error(
+        "Datos incompletos",
+        "Ingresa tarifa y horas para calcular un total válido."
+      );
     }
 
     setLoading(true);
@@ -133,11 +158,10 @@ const BudgetForm = () => {
       };
 
       // 2️⃣ Generar PDF con jsPDF + autoTable
-      const { default: jsPDF } = await import("jspdf");
-      const autoTable = (await import("jspdf-autotable")).default;
+      const { jsPDF } = await import("jspdf");
+      await import("jspdf-autotable");
 
       const doc = new jsPDF();
-
       doc.setFontSize(18);
       doc.text("Presupuesto de Servicio", 14, 22);
       doc.setFontSize(12);
@@ -146,7 +170,7 @@ const BudgetForm = () => {
 
       doc.setFontSize(14);
       doc.text("Cliente", 14, 50);
-      autoTable(doc, {
+      doc.autoTable({
         startY: 55,
         head: [["Nombre", "Email"]],
         body: [[data.client.name, data.client.email]],
@@ -157,7 +181,7 @@ const BudgetForm = () => {
       const finalY = doc.lastAutoTable.finalY;
       doc.setFontSize(14);
       doc.text("Profesional", 14, finalY + 10);
-      autoTable(doc, {
+      doc.autoTable({
         startY: finalY + 15,
         head: [["Nombre", "Oficio"]],
         body: [[data.worker.name, data.worker.profession || "Servicio"]],
@@ -169,7 +193,7 @@ const BudgetForm = () => {
       doc.setFontSize(14);
       doc.text("Detalle del Presupuesto", 14, finalY2 + 10);
 
-      autoTable(doc, {
+      doc.autoTable({
         startY: finalY2 + 15,
         head: [["Descripción", "Cant.", "Precio Unit.", "Total"]],
         body: data.items.map((item) => [
@@ -184,23 +208,35 @@ const BudgetForm = () => {
 
       const finalY3 = doc.lastAutoTable.finalY;
       doc.setFontSize(12);
-      doc.text(`Total estimado: $${parseFloat(data.totalAmount).toFixed(2)}`, 14, finalY3 + 10);
+      doc.text(
+        `Total estimado: $${parseFloat(data.totalAmount).toFixed(2)}`,
+        14,
+        finalY3 + 10
+      );
 
       if (data.description) {
-        const lines = doc.splitTextToSize(`Descripción del servicio: ${data.description}`, 180);
+        const lines = doc.splitTextToSize(
+          `Descripción del servicio: ${data.description}`,
+          180
+        );
         doc.text(lines, 14, finalY3 + 20);
       }
 
       doc.setFontSize(10);
-      doc.text("Este presupuesto es una estimación y no constituye un contrato.", 14, finalY3 + 40);
+      doc.text(
+        "Este presupuesto es una estimación y no constituye un contrato.",
+        14,
+        finalY3 + 40
+      );
 
       // 3️⃣ Convertir PDF a Blob correctamente
-      const pdfBlob = doc.output("blob");
+      const pdfArrayBuffer = doc.output("arraybuffer");
+      const pdfBlob = new Blob([pdfArrayBuffer], { type: "application/pdf" });
 
       // 4️⃣ Enviar al backend
-      const fileName = `presupuesto_${data.client.name}_${data.service}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`;
+      const fileName = `presupuesto_${data.client.name}_${
+        data.service
+      }_${new Date().toISOString().slice(0, 10)}.pdf`;
 
       const formDataToSend = new FormData();
       formDataToSend.append("to", data.client.email);
@@ -225,29 +261,60 @@ const BudgetForm = () => {
     }
   };
 
-  const handleSendByMessage = async () => {
+  // ✅ Nueva función para enviar por mensaje interno
+  const handleSendMessage = async () => {
     if (!formData.clientEmail) {
-      return error("Falta email", "Agrega el email del cliente para enviarlo.");
+      return error(
+        "Falta destinatario",
+        "No se puede enviar el mensaje: falta el email del cliente."
+      );
     }
 
     const { totalAmount } = calculateTotals();
-    if (!totalAmount || totalAmount === "0.00") {
-      return error("Datos incompletos", "Ingresa tarifa y horas para calcular el total.");
+    if (!totalAmount || parseFloat(totalAmount) <= 0) {
+      return error(
+        "Datos incompletos",
+        "Ingresa tarifa y horas para calcular un total válido."
+      );
     }
 
+    setSendingMessage(true);
+
     try {
+      // Enviar mensaje con el resumen del presupuesto
+      // Asumiendo que tienes un endpoint como /messages/send
+      // y que location.state.clientId es el ID del cliente
+      const recipientId = location.state?.clientId;
+
+      if (!recipientId) {
+        throw new Error("ID del cliente no encontrado en la ruta.");
+      }
+
       await API.post("/messages/send", {
-        recipient: location.state?.clientId,
-        content: `Te envío un presupuesto para "${formData.service}" por $${totalAmount}.`,
+        recipient: recipientId, // El ID del cliente al que se envía
+        content: `Hola, te envío un presupuesto para "${formData.service}" por un total estimado de $${totalAmount}.`,
       });
 
-      success("Enviado", `Presupuesto enviado a ${formData.clientName}`);
-    } catch {
-      error("No se pudo enviar", "Hubo un error al enviar el mensaje.");
+      success(
+        "Mensaje enviado",
+        `Presupuesto enviado a ${formData.clientName} por mensaje interno.`
+      );
+      // Opcional: también crear una entrada en budget-requests con estado "enviado_por_mensaje"
+      // await API.post("/budget-requests/log", { requestId: location.state?.requestId, method: "mensaje", amount: totalAmount });
+    } catch (err) {
+      console.error("Error al enviar mensaje:", err);
+      error(
+        "Error",
+        "No se pudo enviar el mensaje. " +
+          (err.response?.data?.msg || err.message)
+      );
+    } finally {
+      setSendingMessage(false);
+      setShowPreview(false); // Cerrar vista previa después de enviar
     }
   };
 
-  // ✅ Vista previa
+  // ✅ Vista previa actualizada
   const renderPreview = () => {
     const { totalAmount } = calculateTotals();
     return (
@@ -259,15 +326,24 @@ const BudgetForm = () => {
             <p>Válido hasta: {formData.validUntil}</p>
           </div>
           <div className="preview-client">
-            <p><strong>Cliente:</strong> {formData.clientName}</p>
-            <p><strong>Email:</strong> {formData.clientEmail}</p>
+            <p>
+              <strong>Cliente:</strong> {formData.clientName}
+            </p>
+            <p>
+              <strong>Email:</strong> {formData.clientEmail}
+            </p>{" "}
+            {/* ✅ Ahora debería mostrar el email */}
           </div>
           <div className="preview-worker">
-            <p><strong>Profesional:</strong> {user?.name}</p>
+            <p>
+              <strong>Profesional:</strong> {user?.name}
+            </p>
           </div>
           {formData.description && (
             <div className="preview-description">
-              <p><strong>Descripción:</strong> {formData.description}</p>
+              <p>
+                <strong>Descripción:</strong> {formData.description}
+              </p>
             </div>
           )}
           <table className="preview-table">
@@ -289,7 +365,9 @@ const BudgetForm = () => {
             </tbody>
           </table>
           <div className="preview-totals">
-            <p><strong>Total estimado:</strong> ${totalAmount}</p>
+            <p>
+              <strong>Total estimado:</strong> ${totalAmount}
+            </p>
           </div>
         </div>
 
@@ -297,10 +375,15 @@ const BudgetForm = () => {
           <button type="button" onClick={handleSubmit} className="btn-download">
             <i className="fas fa-download"></i> Descargar PDF
           </button>
-          <button type="button" onClick={handleSendByEmail} className="btn-send" disabled={loading}>
+          <button
+            type="button"
+            onClick={handleSendByEmail}
+            className="btn-send-email"
+            disabled={loading}
+          >
             {loading ? (
               <>
-                <i className="fas fa-spinner fa-spin"></i> Enviando...
+                <i className="fas fa-spinner fa-spin"></i> Enviando por email...
               </>
             ) : (
               <>
@@ -308,7 +391,29 @@ const BudgetForm = () => {
               </>
             )}
           </button>
-          <button type="button" onClick={() => setShowPreview(false)} className="btn-cancel">
+          {/* ✅ Nuevo botón para enviar por mensaje interno */}
+          <button
+            type="button"
+            onClick={handleSendMessage}
+            className="btn-send-message"
+            disabled={sendingMessage}
+          >
+            {sendingMessage ? (
+              <>
+                <i className="fas fa-spinner fa-spin"></i> Enviando por
+                mensaje...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-comment-dots"></i> Enviar por mensaje
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPreview(false)}
+            className="btn-cancel"
+          >
             Cancelar
           </button>
         </div>
@@ -344,7 +449,8 @@ const BudgetForm = () => {
       <div className="welcome-card">
         <h1>Generar Presupuesto</h1>
         <p>
-          Completa los detalles para crear un presupuesto profesional listo para descargar o enviar.
+          Completa los detalles para crear un presupuesto profesional listo para
+          descargar o enviar.
         </p>
       </div>
 
@@ -368,7 +474,7 @@ const BudgetForm = () => {
               name="clientEmail"
               type="email"
               placeholder="Ej: maria@email.com"
-              value={formData.clientEmail}
+              value={formData.clientEmail} // ✅ Ahora debería estar poblado si vino del location.state
               onChange={handleChange}
               required
             />
