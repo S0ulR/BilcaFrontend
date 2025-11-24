@@ -19,16 +19,19 @@ export const getSocket = (token, userId) => {
   }
 
   // Crear nueva conexión
-  socketInstance = io("http://localhost:5000", {
-    auth: { token },
-    query: { userId },
-    reconnection: true,
-    reconnectionAttempts: 3,
-    reconnectionDelay: 1000,
-    timeout: 5000,
-    transports: ["websocket"],
-    autoConnect: true,
-  });
+  socketInstance = io(
+    process.env.REACT_APP_API_URL || "http://localhost:5000",
+    {
+      auth: { token },
+      query: { userId },
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 1000,
+      timeout: 5000,
+      transports: ["websocket"],
+      autoConnect: true,
+    }
+  );
 
   socketInstance.on("connect_error", (error) => {
     console.error("❌ Error de conexión Socket.IO:", error.message);
