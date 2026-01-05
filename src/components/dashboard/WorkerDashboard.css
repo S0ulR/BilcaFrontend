@@ -68,6 +68,7 @@
 }
 
 .chart-item {
+  height: 320px;
   background: white;
   padding: 1.8rem;
   border-radius: 12px;

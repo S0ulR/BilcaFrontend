@@ -1,3 +1,5 @@
+/*index.css*/
+
 * {
   margin: 0;
   padding: 0;
@@ -5,7 +7,7 @@
 }
 
 body {
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   background: #f4f6f9;
   color: #2c3e50;
   line-height: 1.6;
@@ -32,7 +34,10 @@ button {
   outline: none;
 }
 
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
   font-size: 1rem;
 }
 
@@ -52,7 +57,7 @@ input, select, textarea, button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4A9D9C;
+  background: #4a9d9c;
   border-radius: 4px;
 }
 

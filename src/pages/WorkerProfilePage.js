@@ -1,19 +1,33 @@
 // src/pages/WorkerProfilePage.js
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthProvider"; // Nuevo
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthProvider";
 import API from "../services/api";
 import StarRating from "../components/ui/StarRating";
-import Modal from "../components/ui/ModalForm";
+import Modal from "../components/ui/Modal";
 import { useContext } from "react";
 import { ToastContext } from "../context/ToastContext";
 import Breadcrumb from "../components/ui/Breadcrumb";
+import { handleHttpError } from "../utils/httpErrorHandler";
 import "./WorkerProfilePage.css";
+
+const COUNTRIES = [
+  { code: "AR", name: "Argentina 🇦🇷" },
+  { code: "UY", name: "Uruguay 🇺🇾" },
+  { code: "PY", name: "Paraguay 🇵🇾" },
+  { code: "BR", name: "Brasil 🇧🇷" },
+  { code: "CL", name: "Chile 🇨🇱" },
+  { code: "BO", name: "Bolivia 🇧🇴" },
+];
+
+let locationSearchTimeout = null;
 
 const WorkerProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const location = useLocation();
+
+  const { user } = useAuth();
   const { success, error: showError } = useContext(ToastContext);
 
   const [worker, setWorker] = useState(null);
@@ -21,6 +35,8 @@ const WorkerProfilePage = () => {
 
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactMessage, setContactMessage] = useState("");
+
+  const [authWarning, setAuthWarning] = useState(false);
 
   const [hireForm, setHireForm] = useState({
     service: "",
@@ -37,6 +53,7 @@ const WorkerProfilePage = () => {
     locality: "",
     province: "",
     country: "Argentina",
+    countryCode: "AR",
     urgent: "no",
   });
 
@@ -45,6 +62,72 @@ const WorkerProfilePage = () => {
 
   const isAuth = !!user;
   const isWorker = user && user._id === id;
+
+  // ==========================
+  // Helpers (match + formato)
+  // ==========================
+  const normalize = (s) => (s || "").toString().trim().toLowerCase();
+
+  const getLocalityFromAddr = (addr = {}) =>
+    addr.city ||
+    addr.town ||
+    addr.village ||
+    addr.suburb ||
+    addr.hamlet ||
+    addr.neighbourhood ||
+    "";
+
+  const getRoadFromAddr = (addr = {}) => addr.road || addr.pedestrian || "";
+
+  const scoreSuggestion = (suggestion, query) => {
+    const q = normalize(query);
+    const dn = normalize(suggestion.display_name);
+    const addr = suggestion.address || {};
+    const loc = normalize(getLocalityFromAddr(addr));
+    const road = normalize(getRoadFromAddr(addr));
+
+    let score = 0;
+
+    // match fuerte sobre localidad
+    if (loc && loc.startsWith(q)) score += 120;
+    else if (loc && loc.includes(q)) score += 80;
+
+    // match sobre calle
+    if (road && road.startsWith(q)) score += 70;
+    else if (road && road.includes(q)) score += 40;
+
+    // match sobre display_name
+    if (dn.startsWith(q)) score += 30;
+    else if (dn.includes(q)) score += 15;
+
+    // pequeños bonus por datos útiles
+    if (addr.state) score += 5;
+    if (addr.country) score += 2;
+
+    return score;
+  };
+
+  const isUsefulSuggestion = (suggestion, query) => {
+    const q = normalize(query);
+    if (!q) return false;
+
+    const dn = normalize(suggestion.display_name);
+    const addr = suggestion.address || {};
+    const loc = normalize(getLocalityFromAddr(addr));
+    const road = normalize(getRoadFromAddr(addr));
+
+    const containsStrong =
+      (loc && loc.includes(q)) ||
+      (road && road.includes(q)) ||
+      (dn && dn.includes(q));
+
+    if (!containsStrong) return false;
+
+    // evitar basura típica
+    if (dn.includes("sin nombre")) return false;
+
+    return true;
+  };
 
   // Inicializar formularios con datos del trabajador
   useEffect(() => {
@@ -62,6 +145,7 @@ const WorkerProfilePage = () => {
       setBudgetForm((prev) => {
         const newAddress = fullAddress;
         const newCountry = worker.location.country || "Argentina";
+
         if (prev.address !== newAddress || prev.country !== newCountry) {
           return { ...prev, address: newAddress, country: newCountry };
         }
@@ -190,22 +274,41 @@ const WorkerProfilePage = () => {
     }
   };
 
-  // Solicitar presupuesto
   const handleSubmitBudget = async (e) => {
     e.preventDefault();
 
-    // Validación adicional
     if (!budgetForm.province?.trim()) {
       return showError(
-        "Campo requerido",
-        "La provincia no pudo ser detectada. Por favor, escribe una dirección válida."
+        "Provincia requerida",
+        "Por favor, selecciona una dirección de la lista o usa tu ubicación actual."
       );
     }
+
     if (!budgetForm.locality?.trim()) {
       return showError(
-        "Campo requerido",
-        "La localidad no pudo ser detectada."
+        "Localidad requerida",
+        "Por favor, selecciona una dirección de la lista o usa tu ubicación actual."
       );
+    }
+    if (!isAuth) {
+      showError(
+        "Acceso requerido",
+        <span>
+          Para poder enviar un presupuesto debes{" "}
+          <a
+            href="/login"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/login", { state: { from: location } });
+            }}
+            style={{ color: "#4a9d9c", fontWeight: "bold" }}
+          >
+            ingresar a tu cuenta
+          </a>
+          .
+        </span>
+      );
+      return;
     }
 
     try {
@@ -227,6 +330,7 @@ const WorkerProfilePage = () => {
         locality: "",
         province: "",
         country: "Argentina",
+        countryCode: "AR",
         urgent: "no",
       });
       setSuggestions([]);
@@ -261,13 +365,13 @@ const WorkerProfilePage = () => {
           const data = response.data;
           const addr = data.address;
 
-          setBudgetForm({
-            ...budgetForm,
+          setBudgetForm((prev) => ({
+            ...prev,
             address: data.display_name,
             locality: addr.town || addr.city || addr.suburb || "",
-            province: addr.state || "Santa Fe",
-            country: addr.country || "Argentina",
-          });
+            province: addr.state || "",
+            country: addr.country || prev.country || "Argentina",
+          }));
           setSuggestions([]);
           success("Ubicación detectada", "Se usó tu ubicación actual.");
         } catch (err) {
@@ -307,41 +411,108 @@ const WorkerProfilePage = () => {
     );
   };
 
-  // Autocompletado con Nominatim (OpenStreetMap)
-  const handleLocationChange = async (e) => {
+  const handleLocationChange = (e) => {
     const value = e.target.value;
-    setBudgetForm({ ...budgetForm, address: value });
-    setSuggestions([]);
 
-    if (value.length < 3) return;
+    setBudgetForm((prev) => ({
+      ...prev,
+      address: value,
+      locality: "",
+      province: "",
+    }));
 
-    try {
-      const response = await API.get(`/geocode/search`, {
-        params: { q: value, country: "AR" },
-      });
-
-      const filtered = response.data.map((item) => ({
-        display_name: item.display_name,
-        address: item.address || {},
-      }));
-
-      setSuggestions(filtered);
-    } catch (err) {
-      console.error("Error buscando dirección:", err);
-      showError("Error", "No se pudo buscar la dirección. Revisa tu conexión.");
+    if (locationSearchTimeout) {
+      clearTimeout(locationSearchTimeout);
     }
+
+    if (value.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    locationSearchTimeout = setTimeout(async () => {
+      try {
+        const response = await API.get("/geocode/search", {
+          params: {
+            q: value,
+            country: budgetForm.countryCode || "AR",
+          },
+        });
+
+        // filtro fuerte + orden por relevancia
+        const clean = (response.data || [])
+          .filter((item) => isUsefulSuggestion(item, value))
+          .sort((a, b) => scoreSuggestion(b, value) - scoreSuggestion(a, value))
+          .slice(0, 6);
+
+        setSuggestions(clean);
+      } catch (err) {
+        console.error("Error buscando dirección:", err);
+        setSuggestions([]);
+      }
+    }, 350);
   };
 
-  // Seleccionar sugerencia
+  const handleCountryChange = (e) => {
+    const countryCode = e.target.value;
+    const countryName =
+      COUNTRIES.find((c) => c.code === countryCode)?.name.split(" ")[0] ||
+      "Argentina";
+
+    setBudgetForm((prev) => ({
+      ...prev,
+      country: countryName,
+      countryCode: countryCode,
+      address: "",
+      locality: "",
+      province: "",
+    }));
+    setSuggestions([]);
+  };
+
+  // SELECCIÓN DE SUGERENCIA MEJORADA
   const selectSuggestion = (suggestion) => {
-    const addr = suggestion.address;
-    setBudgetForm({
-      ...budgetForm,
+    const addr = suggestion.address || {};
+
+    // Extraer datos básicos
+    const locality =
+      addr.town ||
+      addr.city ||
+      addr.village ||
+      addr.suburb ||
+      addr.hamlet ||
+      addr.neighbourhood ||
+      "";
+
+    const province = addr.state || ""; // Puede estar vacío
+
+    // Si no hay provincia, intentar inferirla del display_name
+    let inferredProvince = province;
+    if (!inferredProvince && suggestion.display_name) {
+      // Ejemplo: "San Lorenzo, Santa Fe, Argentina"
+      // Dividimos por comas y tomamos el segundo elemento (índice 1)
+      const parts = suggestion.display_name.split(",").map((p) => p.trim());
+      if (parts.length >= 2) {
+        // El segundo elemento podría ser la provincia
+        inferredProvince = parts[1];
+      }
+    }
+
+    // Aseguramos que no sea vacío
+    const finalProvince = inferredProvince || "Sin provincia";
+
+    const addressData = {
       address: suggestion.display_name,
-      locality: addr.town || addr.city || addr.village || addr.suburb || "",
-      province: addr.state || "Santa Fe",
-      country: addr.country || "Argentina",
-    });
+      locality: locality || "Sin localidad", // Asegurar que no sea vacío
+      province: finalProvince, // Usar la inferida o "Sin provincia"
+      country: addr.country || budgetForm.country || "Argentina",
+    };
+
+    setBudgetForm((prev) => ({
+      ...prev,
+      ...addressData,
+    }));
+
     setSuggestions([]);
   };
 
@@ -445,9 +616,6 @@ const WorkerProfilePage = () => {
               <i className="fas fa-file-invoice-dollar"></i> Solicitar
               presupuesto
             </button>
-            <button className="btn-hire" onClick={handleHire}>
-              <i className="fas fa-handshake"></i> Contratar
-            </button>
           </div>
         )}
       </div>
@@ -511,6 +679,41 @@ const WorkerProfilePage = () => {
         size="md"
       >
         <form onSubmit={handleContact}>
+          {!isAuth && (
+            <div
+              style={{
+                backgroundColor: "#fff3cd",
+                border: "1px solid #ffeaa7",
+                borderRadius: "8px",
+                padding: "0.75rem 1rem",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.5rem",
+              }}
+            >
+              <i
+                className="fas fa-exclamation-triangle"
+                style={{ color: "#d39e00" }}
+              ></i>
+              <div>
+                <strong>Acceso requerido</strong>
+                <br />{" "}
+                <a
+                  href="/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/login", { state: { from: location } });
+                  }}
+                  style={{ color: "#FFA726", fontWeight: "bold" }}
+                >
+                  Inicia sesión
+                </a>{" "}
+                para contactar al trabajador.
+              </div>
+            </div>
+          )}
+
           <div className="form-group">
             <label>Mensaje *</label>
             <textarea
@@ -522,8 +725,15 @@ const WorkerProfilePage = () => {
               autoFocus
             />
           </div>
+
           <div className="modal-actions">
-            <button type="submit">Enviar</button>
+            <button
+              type="submit"
+              disabled={!isAuth}
+              style={!isAuth ? { opacity: 0.6, cursor: "not-allowed" } : {}}
+            >
+              {isAuth ? "Enviar" : "Iniciar sesión para enviar"}
+            </button>
             <button type="button" onClick={() => setContactModalOpen(false)}>
               Cancelar
             </button>
@@ -535,10 +745,44 @@ const WorkerProfilePage = () => {
       <Modal
         isOpen={budgetModalOpen}
         onClose={() => setBudgetModalOpen(false)}
-        title={`Solicitar presupuesto a ${worker.name}`}
+        title={`Solicitud de presupuesto para ${worker.name}`}
         size="lg"
       >
         <form onSubmit={handleSubmitBudget}>
+          {!isAuth && (
+            <div
+              style={{
+                backgroundColor: "#fff3cd",
+                border: "1px solid #ffeaa7",
+                borderRadius: "8px",
+                padding: "0.75rem 1rem",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.5rem",
+              }}
+            >
+              <i
+                className="fas fa-exclamation-triangle"
+                style={{ color: "#d39e00" }}
+              ></i>
+              <div>
+                <strong>Acceso requerido</strong>
+                <br />{" "}
+                <a
+                  href="/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/login", { state: { from: location } });
+                  }}
+                  style={{ color: "#4a9d9c", fontWeight: "bold" }}
+                >
+                  Ingresa a tu cuenta
+                </a>{" "}
+                para enviar una solicitud de presupuesto.
+              </div>
+            </div>
+          )}
           <div className="form-grid">
             <div className="form-column">
               <div className="form-group">
@@ -546,7 +790,10 @@ const WorkerProfilePage = () => {
                 <select
                   value={budgetForm.profession}
                   onChange={(e) =>
-                    setBudgetForm({ ...budgetForm, profession: e.target.value })
+                    setBudgetForm({
+                      ...budgetForm,
+                      profession: e.target.value,
+                    })
                   }
                   required
                 >
@@ -560,21 +807,37 @@ const WorkerProfilePage = () => {
                     <option value="">Selecciona un oficio</option>
                   )}
                 </select>
+                <small style={{ color: "#6c757d", fontSize: "0.8rem" }}>
+                  Selecciona la profesión que deseas contratar.
+                </small>
               </div>
+
               <div className="form-group">
                 <label>Fecha tentativa de inicio (opcional)</label>
                 <input
                   type="date"
                   value={budgetForm.startDate}
                   onChange={(e) =>
-                    setBudgetForm({ ...budgetForm, startDate: e.target.value })
+                    setBudgetForm({
+                      ...budgetForm,
+                      startDate: e.target.value,
+                    })
                   }
                 />
+                <small style={{ color: "#6c757d", fontSize: "0.8rem" }}>
+                  Si tienes fecha para iniciar el trabajo infórmala, para que el
+                  trabajador vea su disponibilidad.
+                </small>
               </div>
+
               <div className="form-group">
                 <label>¿Es urgente?</label>
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                  }}
                 >
                   <label
                     style={{
@@ -595,6 +858,7 @@ const WorkerProfilePage = () => {
                     />
                     No
                   </label>
+
                   <label
                     style={{
                       display: "flex",
@@ -615,8 +879,12 @@ const WorkerProfilePage = () => {
                     Sí
                   </label>
                 </div>
+                <small style={{ color: "#6c757d", fontSize: "0.8rem" }}>
+                  Indica si necesitas el servicio con urgencia.
+                </small>
               </div>
             </div>
+
             <div className="form-column">
               <div className="form-group">
                 <label>Descripción del trabajo *</label>
@@ -632,17 +900,61 @@ const WorkerProfilePage = () => {
                   rows="3"
                   required
                 />
+                <small style={{ color: "#6c757d", fontSize: "0.8rem" }}>
+                  Se breve y específico en lo que necesitas.
+                </small>
               </div>
+
+              <div className="form-group">
+                <label>País *</label>
+                <select
+                  value={budgetForm.countryCode || "AR"}
+                  onChange={handleCountryChange}
+                  className="country-select"
+                  required
+                >
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group">
                 <label>Ubicación del trabajo *</label>
-                <input
-                  type="text"
-                  value={budgetForm.address}
-                  onChange={handleLocationChange}
-                  placeholder="Ej: Av. San Martín 1234, San Lorenzo"
-                  className="location-input"
-                  required
-                />
+
+                <div className="location-autocomplete">
+                  <input
+                    type="text"
+                    value={budgetForm.address}
+                    onChange={handleLocationChange}
+                    placeholder="Ej: San Lorenzo, Santa Fe o Av. Córdoba 1234"
+                    className={`location-input ${
+                      suggestions.length > 0 ? "open" : ""
+                    }`}
+                    required
+                  />
+
+                  {suggestions.length > 0 && (
+                    <ul className="suggestions-list">
+                      {suggestions.map((suggestion, i) => {
+                        return (
+                          <li
+                            key={i}
+                            onClick={() => selectSuggestion(suggestion)}
+                            className="suggestion-item"
+                          >
+                            <div className="suggestion-title">
+                              {suggestion.display_name}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   onClick={handleUseCurrentLocation}
@@ -673,32 +985,26 @@ const WorkerProfilePage = () => {
                     ? "Obteniendo ubicación..."
                     : "Usar mi ubicación actual"}
                 </button>
-                {suggestions.length > 0 && (
-                  <ul className="suggestions-list">
-                    {suggestions.map((suggestion, i) => (
-                      <li
-                        key={i}
-                        onClick={() => selectSuggestion(suggestion)}
-                        style={{
-                          padding: "0.5rem",
-                          cursor: "pointer",
-                          borderBottom: "1px solid #eee",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        {suggestion.display_name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+
                 <small style={{ color: "#6c757d", fontSize: "0.8rem" }}>
-                  Selecciona una opción de la lista o usa tu ubicación actual.
+                  ⚠️{" "}
+                  <strong>Para mayor seguridad sólo ingresa tu ciudad. </strong>
+                  Luego selecciona una opción de la lista para que se completen
+                  automáticamente la provincia y localidad.
                 </small>
               </div>
             </div>
           </div>
+
           <div className="modal-actions">
-            <button type="submit">Enviar solicitud</button>
+            <button
+              type="submit"
+              disabled={!isAuth}
+              style={!isAuth ? { opacity: 0.6, cursor: "not-allowed" } : {}}
+            >
+              {isAuth ? "Enviar solicitud" : "Iniciar sesión para enviar"}
+            </button>
+
             <button type="button" onClick={() => setBudgetModalOpen(false)}>
               Cancelar
             </button>

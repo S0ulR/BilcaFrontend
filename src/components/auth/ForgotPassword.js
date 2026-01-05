@@ -17,27 +17,19 @@ const ForgotPassword = () => {
     setSuccess("");
     setLoading(true);
 
-    if (!email) {
-      setError("Por favor ingresa tu email");
-      setLoading(false);
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Email inválido");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Por favor ingresa un email válido");
       setLoading(false);
       return;
     }
 
     try {
       await API.post("/auth/forgotpassword", { email });
-      setSuccess("Recibirás un enlace para restablecer tu contraseña en tu casilla de correo, no olvides revisar spam.");
-      // No redirigir automáticamente
-    } catch (err) {
-      setError(
-        err.response?.data?.msg || 
-        "No se pudo procesar la solicitud. Intenta más tarde."
+      setSuccess(
+        "Si tu email está registrado, recibirás un enlace para restablecer tu contraseña."
       );
+    } catch (err) {
+      setError("No se pudo procesar la solicitud. Intenta más tarde.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +54,7 @@ const ForgotPassword = () => {
 
           <div className="input-group stacked">
             <label htmlFor="email">Email</label>
-            <div className="input-wrapper">              
+            <div className="input-wrapper">
               <input
                 id="email"
                 type="email"
@@ -74,7 +66,11 @@ const ForgotPassword = () => {
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary btn-block">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary btn-block"
+          >
             {loading ? (
               <>
                 <i className="fas fa-spinner fa-spin"></i> Enviando...

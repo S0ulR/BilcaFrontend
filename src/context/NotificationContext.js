@@ -1,22 +1,59 @@
 // frontend/context/NotificationContext.js
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import API from "../services/api";
 
 const NotificationContext = createContext();
 
 export const useNotifications = () => useContext(NotificationContext);
 
+// ✅ Mapeo de tipos de notificación a secciones del dashboard
+const NOTIFICATION_TYPE_MAP = {
+  budget_request: "budgetRequestsReceived",
+  budget_response: "budgetResponses",
+  contract_pending: "contractsReceived",
+  contract_accepted: "contractsAccepted",
+  invoice_sent: "invoicesSent",
+  hire: "hiresReceived",
+};
+
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadByType, setUnreadByType] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // ✅ Cambiado a sessionStorage
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-  const userId = user?.id || null;
+  const getUserFromSession = () => {
+    try {
+      const userStr = sessionStorage.getItem("user");
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (e) {
+      console.error("Error al parsear usuario de sessionStorage:", e);
+      return null;
+    }
+  };
 
-  // Usamos ref para mantener la referencia del intervalo
+  const user = getUserFromSession();
+  const userId = user?.id || null;
   const intervalRef = useRef(null);
+
+  const calculateUnreadByType = (notifs) => {
+    const countMap = {};
+    notifs
+      .filter((n) => !n.read)
+      .forEach((n) => {
+        const dashboardType = NOTIFICATION_TYPE_MAP[n.type];
+        if (dashboardType) {
+          countMap[dashboardType] = (countMap[dashboardType] || 0) + 1;
+        }
+      });
+    return countMap;
+  };
 
   const loadNotifications = async () => {
     if (!userId) {
@@ -26,16 +63,21 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const res = await API.get("/notifications");
-      setNotifications(res.data);
-      const count = res.data.filter((n) => !n.read).length;
-      setUnreadCount(count);
+      const notifs = res.data || [];
+      setNotifications(notifs);
+
+      const totalUnread = notifs.filter((n) => !n.read).length;
+      setUnreadCount(totalUnread);
+
+      const byType = calculateUnreadByType(notifs);
+      setUnreadByType(byType);
     } catch (err) {
       console.error("No se pudieron cargar notificaciones", err);
       if ([401, 403].includes(err.response?.status)) {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        sessionStorage.removeItem('sessionId');
-        window.location.href = '/login';
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("sessionId");
+        window.location.href = "/login";
         if (intervalRef.current) clearInterval(intervalRef.current);
       }
     } finally {
@@ -49,20 +91,16 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       if (ids) {
-        // Marcar notificaciones específicas como leídas
         await API.post("/notifications/read", { ids });
         setNotifications((prev) =>
           prev.map((n) => (ids.includes(n._id) ? { ...n, read: true } : n))
         );
-        setUnreadCount(prev => 
-          prev - ids.filter(id => notifications.find(n => n._id === id && !n.read)).length
-        );
       } else {
-        // Marcar todas como leídas
         await API.post("/notifications/read");
-        setUnreadCount(0);
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       }
+
+      loadNotifications();
     } catch (err) {
       console.error("No se pudieron marcar como leídas", err);
     }
@@ -72,9 +110,7 @@ export const NotificationProvider = ({ children }) => {
     try {
       await API.delete("/notifications", { data: { ids } });
       setNotifications((prev) => prev.filter((n) => !ids.includes(n._id)));
-      setUnreadCount(prev => 
-        prev - ids.filter(id => notifications.find(n => n._id === id && !n.read)).length
-      );
+      loadNotifications();
     } catch (err) {
       console.error("Error al eliminar notificaciones", err);
       throw err;
@@ -86,55 +122,40 @@ export const NotificationProvider = ({ children }) => {
       await API.delete("/notifications/all");
       setNotifications([]);
       setUnreadCount(0);
+      setUnreadByType({});
     } catch (err) {
       console.error("Error al eliminar todas", err);
       throw err;
     }
   };
 
-  // Efecto con limpieza segura
   useEffect(() => {
-    // Si hay un intervalo activo, limpiarlo
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
 
     const init = async () => {
       await loadNotifications();
-      
       if (userId) {
-        intervalRef.current = setInterval(async () => {
-          try {
-            await loadNotifications();
-          } catch (err) {
-            if ([401, 403].includes(err.response?.status)) {
-              if (intervalRef.current) clearInterval(intervalRef.current);
-              sessionStorage.removeItem('token');
-              sessionStorage.removeItem('user');
-              sessionStorage.removeItem('sessionId');
-              window.location.href = '/login';
-            }
-          }
-        }, 30000); // Cada 30 segundos
+        intervalRef.current = setInterval(loadNotifications, 30000);
       }
     };
 
     init();
 
-    // Limpieza al desmontar o cambiar userId
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
-        intervalRef.current = null;
       }
     };
-  }, [userId]); // ✅ Dependencia estable: solo el ID
+  }, [userId]);
 
   return (
     <NotificationContext.Provider
       value={{
         notifications,
         unreadCount,
+        unreadByType,
         loading,
         markAsRead,
         deleteNotifications,

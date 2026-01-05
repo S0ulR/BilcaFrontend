@@ -1,14 +1,7 @@
+// components/ui/DataTable.js
 import React, { useState, useMemo } from "react";
 import "./DataTable.css";
 
-/**
- * Componente reutilizable de tabla de datos con:
- * - Ordenamiento dinámico
- * - Búsqueda global
- * - Paginación
- * - Renderizado personalizado por columna
- * - Acciones configurables (icon, className pueden ser string o función(row))
- */
 const DataTable = ({
   data = [],
   columns = [],
@@ -24,25 +17,30 @@ const DataTable = ({
   const [sortConfig, setSortConfig] = useState(initialSort);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Obtener valor por path (ej: worker.name)
   const getValue = (obj = {}, path = "") => {
     if (!path) return undefined;
-    return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+    return path
+      .split(".")
+      .reduce((acc, key) => (acc ? acc[key] : undefined), obj);
   };
 
-  // Filtrado global simple sobre columnas con accessor
   const filteredData = useMemo(() => {
     if (!search) return data;
     const q = search.toString().toLowerCase();
     return data.filter((row) =>
       columns.some((col) => {
-        const value = col.accessor ? getValue(row, col.accessor) : getValue(row, col.key);
-        return value !== undefined && value !== null && value.toString().toLowerCase().includes(q);
+        const value = col.accessor
+          ? getValue(row, col.accessor)
+          : getValue(row, col.key);
+        return (
+          value !== undefined &&
+          value !== null &&
+          value.toString().toLowerCase().includes(q)
+        );
       })
     );
   }, [search, data, columns]);
 
-  // Ordenamiento
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
     const { key, direction } = sortConfig;
@@ -54,12 +52,10 @@ const DataTable = ({
       const va = getValue(a, accessor);
       const vb = getValue(b, accessor);
 
-      // manejar nulos/undefined
       if (va === undefined && vb === undefined) return 0;
       if (va === undefined) return 1;
       if (vb === undefined) return -1;
 
-      // Si son strings, comparar case-insensitive
       if (typeof va === "string" && typeof vb === "string") {
         const A = va.toLowerCase();
         const B = vb.toLowerCase();
@@ -74,11 +70,12 @@ const DataTable = ({
     return copy;
   }, [filteredData, sortConfig, columns]);
 
-  // Paginación
   const totalPages = Math.max(1, Math.ceil(sortedData.length / itemsPerPage));
-  const paginatedData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedData = sortedData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  // Cambiar orden
   const handleSort = (key) => {
     setSortConfig((prev) => {
       if (prev?.key === key) {
@@ -89,9 +86,9 @@ const DataTable = ({
     });
   };
 
-  // Icono de orden
   const renderSortIcon = (key) => {
-    if (!sortConfig || sortConfig.key !== key) return <i className="fas fa-sort sort-icon" aria-hidden="true" />;
+    if (!sortConfig || sortConfig.key !== key)
+      return <i className="fas fa-sort sort-icon" aria-hidden="true" />;
     return sortConfig.direction === "asc" ? (
       <i className="fas fa-sort-up sort-icon active" aria-hidden="true" />
     ) : (
@@ -99,14 +96,18 @@ const DataTable = ({
     );
   };
 
-  // Helpers para acciones: soporta icon/className como string o función(row)
-  const resolve = (maybeFn, row) => (typeof maybeFn === "function" ? maybeFn(row) : maybeFn);
+  const resolve = (maybeFn, row) =>
+    typeof maybeFn === "function" ? maybeFn(row) : maybeFn;
 
   return (
     <div className={`data-table-container ${className}`}>
       {enableSearch && (
         <div className="search-bar-container">
-          <div className="search-bar" role="search" aria-label="Buscar en la tabla">
+          <div
+            className="search-bar"
+            role="search"
+            aria-label="Buscar en la tabla"
+          >
             <i className="fas fa-search search-icon" aria-hidden="true" />
             <input
               type="text"
@@ -145,7 +146,11 @@ const DataTable = ({
                   onClick={() => col.sortable && handleSort(col.key)}
                   scope="col"
                   aria-sort={
-                    sortConfig?.key === col.key ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"
+                    sortConfig?.key === col.key
+                      ? sortConfig.direction === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
                   }
                 >
                   <div className="th-content">
@@ -164,14 +169,11 @@ const DataTable = ({
                 <tr key={row._id || idx}>
                   {columns.map((col) => (
                     <td key={col.key} data-label={col.header}>
-                      {/* Si el column tiene render personalizado, usarlo */}
-                      {col.render ? (
-                        col.render(row)
-                      ) : col.accessor ? (
-                        getValue(row, col.accessor)
-                      ) : (
-                        getValue(row, col.key)
-                      )}
+                      {col.render
+                        ? col.render(row)
+                        : col.accessor
+                        ? getValue(row, col.accessor)
+                        : getValue(row, col.key)}
                     </td>
                   ))}
 
@@ -180,15 +182,24 @@ const DataTable = ({
                       {actions.map((action) => {
                         const btnClass = resolve(action.className, row) || "";
                         const iconClass = resolve(action.icon, row) || "";
-                        const isGenerated = typeof action.isGenerated === "function" ? action.isGenerated(row) : false;
-                        const extraGeneratedClass = action.key === "pdf" && isGenerated ? "generated" : "";
-                        const ariaLabel = action.label || action.key || "acción";
+                        const isGenerated =
+                          typeof action.isGenerated === "function"
+                            ? action.isGenerated(row)
+                            : false;
+                        const extraGeneratedClass =
+                          action.key === "pdf" && isGenerated
+                            ? "generated"
+                            : "";
+                        const ariaLabel =
+                          action.label || action.key || "acción";
 
                         return (
                           <button
                             key={action.key}
                             className={`action-btn ${btnClass} ${extraGeneratedClass}`}
-                            onClick={() => action.onClick && action.onClick(row)}
+                            onClick={() =>
+                              action.onClick && action.onClick(row)
+                            }
                             title={ariaLabel}
                             aria-label={ariaLabel}
                           >
@@ -215,9 +226,12 @@ const DataTable = ({
         </table>
       </div>
 
-      {/* Paginación */}
       {totalPages > 1 && (
-        <div className="pagination" role="navigation" aria-label="Paginación de tabla">
+        <div
+          className="pagination"
+          role="navigation"
+          aria-label="Paginación de tabla"
+        >
           <button
             className="page-btn"
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
@@ -246,4 +260,3 @@ const DataTable = ({
 };
 
 export default DataTable;
-

@@ -1,0 +1,126 @@
+/* src/components/subscription/SubscriptionPlans.css */
+.subscription-plans {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.subscription-plans h2 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.plan-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 2rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+}
+
+.plan-header {
+  margin-bottom: 1.5rem;
+}
+
+.plan-header h3 {
+  margin: 0 0 0.5rem;
+  color: #2c3e50;
+  font-size: 1.5rem;
+}
+
+.plan-price {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4a9d9c;
+}
+
+.price {
+  font-size: 2.5rem;
+}
+
+.currency {
+  font-size: 1.2rem;
+  margin-right: 0.2rem;
+}
+
+.period {
+  font-size: 1rem;
+  color: #666;
+  font-weight: normal;
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.plan-features li {
+  padding: 0.5rem 0;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.btn-plan {
+  background: linear-gradient(135deg, #4a9d9c, #3a7c7b);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+}
+
+.btn-plan:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3a7c7b, #2a5d5c);
+}
+
+.btn-plan:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.note {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+.note i {
+  color: #4a9d9c;
+  margin-right: 0.5rem;
+}

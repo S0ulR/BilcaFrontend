@@ -1,9 +1,10 @@
+// src/App.js
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Layouts
-import PublicLayout from "./components/layout/PublicLayout"; 
-import DashboardLayout from "./components/layout/DashboardLayout"; 
+import PublicLayout from "./components/layout/PublicLayout";
+import DashboardLayout from "./components/layout/DashboardLayout";
 
 // Páginas públicas
 import Home from "./pages/Home";
@@ -19,8 +20,8 @@ import Privcidad from "./pages/Privacy";
 import Terminos from "./pages/Terms";
 import Sobre from "./pages/AboutUs";
 
-// Admin
-import AdminPanel from "./components/admin/AdminPanel";
+import ReviewPage from "./pages/ReviewPage";
+import ReviewSuccessPage from "./pages/ReviewSuccessPage";
 
 // Auth guard
 import PrivateRoute from "./components/auth/PrivateRoute";
@@ -52,6 +53,10 @@ function App() {
         <Route path="/contact" element={<Contacto />} />
         <Route path="/terms" element={<Terminos />} />
         <Route path="/privacy" element={<Privcidad />} />
+
+        {/* Rutas de reseña (públicas y accesibles por email) */}
+        <Route path="/review/:token" element={<ReviewPage />} />
+        <Route path="/review/success" element={<ReviewSuccessPage />} />
       </Route>
 
       {/* === RUTAS PROTEGIDAS (DASHBOARD) === */}
@@ -61,18 +66,6 @@ function App() {
           <PrivateRoute>
             <DashboardLayout user={user} />
           </PrivateRoute>
-        }
-      />
-
-      {/* === ADMIN === */}
-      <Route
-        path="/admin"
-        element={
-          user?.role === "admin" ? (
-            <AdminPanel />
-          ) : (
-            <Navigate to="/" replace />
-          )
         }
       />
 

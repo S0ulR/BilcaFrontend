@@ -1,0 +1,46 @@
+/* src/pages/ReviewSuccessPage.css */
+.review-success-page {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.success-card {
+  text-align: center;
+  background: #d4edda !important;
+  border: 1px solid #c3e6cb !important;
+}
+
+.success-icon {
+  font-size: 4rem;
+  color: #28a745;
+  margin: 1rem 0;
+}
+
+.success-card h1 {
+  color: #155724 !important;
+  margin-bottom: 1rem;
+}
+
+.success-card p {
+  color: #155724;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.btn-primary {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #4a9d9c, #3a7c7b);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 157, 156, 0.3);
+}

@@ -16,10 +16,8 @@ root.render(
       <ToastProvider>
         <NotificationProvider>
           <AuthProvider>
-            <>
-              <App />
-              <InactivityModal />
-            </>
+            <App />
+            <InactivityModal />
           </AuthProvider>
         </NotificationProvider>
       </ToastProvider>

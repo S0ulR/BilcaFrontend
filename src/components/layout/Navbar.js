@@ -11,7 +11,8 @@ import "./Navbar.css";
 const Navbar = ({ isDashboard = false, toggleSidebar }) => {
   const { user, logout } = useAuth();
   const { success } = useContext(ToastContext);
-  const { notifications, unreadCount, markAsRead, loading } = useNotifications();
+  const { notifications, unreadCount, markAsRead, loading } =
+    useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -119,24 +120,57 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
     }
   };
 
-  // 👇 Items del menú móvil: idénticos al sidebar + Inicio
   const getMobileMenuItems = () => {
     const items = [
-      { path: "/", label: "Inicio", icon: "fa-home" }, // ✅ Agregado
-      { path: "/dashboard/search", label: "Buscar trabajador", icon: "fa-search" },
-      { path: "/dashboard/hires", label: "Mis contrataciones", icon: "fa-handshake" },
+      { path: "/", label: "Inicio", icon: "fa-home" },
+      {
+        path: "/dashboard/search",
+        label: "Buscar trabajador",
+        icon: "fa-search",
+      },
+      {
+        path: "/dashboard/hires",
+        label: "Mis contrataciones",
+        icon: "fa-handshake",
+      },
       { path: "/dashboard/messages", label: "Mensajes", icon: "fa-envelope" },
-      { path: "/dashboard/documents", label: "Contratos", icon: "fa-file-invoice" },
+      {
+        path: "/dashboard/documents",
+        label: "Contratos",
+        icon: "fa-file-invoice",
+      },
       ...(user?.role === "worker"
         ? [
-            { path: "/dashboard/worker", label: "Dashboard", icon: "fa-chart-line" },
+            {
+              path: "/dashboard/worker",
+              label: "Dashboard",
+              icon: "fa-chart-line",
+            },
             { path: "/dashboard/reviews", label: "Reseñas", icon: "fa-star" },
+            {
+              path: "/dashboard/subscription",
+              label: "Suscripción",
+              icon: "fa-crown",
+            },
           ]
         : []),
-      { path: "/dashboard/notifications", label: "Notificaciones", icon: "fa-bell" },
+      {
+        path: "/dashboard/notifications",
+        label: "Notificaciones",
+        icon: "fa-bell",
+      },
       { path: "/dashboard/profile", label: "Perfil", icon: "fa-user" },
       { path: "/dashboard/settings", label: "Configuración", icon: "fa-cog" },
     ];
+
+    if (user?.role === "superadmin") {
+      items.push({
+        path: "/dashboard/admin",
+        label: "Panel de Administración",
+        icon: "fa-cogs",
+      });
+    }
+
     return items;
   };
 
@@ -152,9 +186,7 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
             <img src="/logo.jpeg" alt="Bilca" className="logo-img" />
           </Link>
 
-          <div className="nav-search">
-            {!isDashboard && <SearchBar />}
-          </div>
+          <div className="nav-search">{!isDashboard && <SearchBar />}</div>
 
           <div className="nav-auth">
             {user ? (
@@ -166,7 +198,9 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
                   aria-label={`Tienes ${unreadCount} notificaciones no leídas`}
                 >
                   <i className="fas fa-bell"></i>
-                  {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+                  {unreadCount > 0 && (
+                    <span className="badge">{unreadCount}</span>
+                  )}
                 </button>
 
                 <div
@@ -188,8 +222,12 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
                         <a
                           key={n._id}
                           href={getLink(n)}
-                          className={`notification-item ${n.read ? "read" : "unread"} ${n.read ? "" : "bold"}`}
-                          onClick={(e) => handleNotificationClick(e, getLink(n))}
+                          className={`notification-item ${
+                            n.read ? "read" : "unread"
+                          } ${n.read ? "" : "bold"}`}
+                          onClick={(e) =>
+                            handleNotificationClick(e, getLink(n))
+                          }
                         >
                           <p>{n.message}</p>
                           <small>
@@ -231,21 +269,56 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
 
                 <div
                   ref={userMenuRef}
-                  className={`dropdown-menu user-dropdown ${showUserMenu ? "show" : ""}`}
+                  className={`dropdown-menu user-dropdown ${
+                    showUserMenu ? "show" : ""
+                  }`}
                 >
                   <div className="dropdown-body">
-                    <Link to="/dashboard" onClick={() => setShowUserMenu(false)}>
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setShowUserMenu(false)}
+                    >
                       <i className="fas fa-tachometer-alt"></i> Panel de control
                     </Link>
-                    <Link to="/dashboard/profile" onClick={() => setShowUserMenu(false)}>
+                    <Link
+                      to="/dashboard/profile"
+                      onClick={() => setShowUserMenu(false)}
+                    >
                       <i className="fas fa-user"></i> Perfil
                     </Link>
-                    <Link to="/dashboard/settings" onClick={() => setShowUserMenu(false)}>
+                    <Link
+                      to="/dashboard/settings"
+                      onClick={() => setShowUserMenu(false)}
+                    >
                       <i className="fas fa-cog"></i> Configuración
                     </Link>
-                    <Link to="/dashboard/messages" onClick={() => setShowUserMenu(false)}>
+                    <Link
+                      to="/dashboard/messages"
+                      onClick={() => setShowUserMenu(false)}
+                    >
                       <i className="fas fa-envelope"></i> Mensajes
                     </Link>
+
+                    {/* ✅ NUEVO: Enlace a Suscripción para trabajadores */}
+                    {user.role === "worker" && (
+                      <Link
+                        to="/dashboard/subscription"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <i className="fas fa-crown"></i> Suscripción
+                      </Link>
+                    )}
+
+                    {/* Panel de administración para superadmin */}
+                    {user.role === "superadmin" && (
+                      <Link
+                        to="/dashboard/admin"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <i className="fas fa-cogs"></i> Panel de Administración
+                      </Link>
+                    )}
+
                     <button onClick={openLogoutModal}>
                       <i className="fas fa-sign-out-alt"></i> Salir
                     </button>
@@ -268,7 +341,15 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
               onClick={handleHamburgerClick}
               aria-label="Menú"
             >
-              <i className={`fas ${isDashboard ? "fa-bars" : isMobileMenuOpen ? "fa-times" : "fa-bars"}`}></i>
+              <i
+                className={`fas ${
+                  isDashboard
+                    ? "fa-bars"
+                    : isMobileMenuOpen
+                    ? "fa-times"
+                    : "fa-bars"
+                }`}
+              ></i>
             </button>
           </div>
         </div>
@@ -279,10 +360,7 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
             <div ref={mobileMenuRef} className="mobile-menu">
               <div className="mobile-menu-header">
                 <h3>Menú</h3>
-                <button
-                  onClick={closeMobileMenu}
-                  className="close-btn"
-                >
+                <button onClick={closeMobileMenu} className="close-btn">
                   <i className="fas fa-times"></i>
                 </button>
               </div>
@@ -300,7 +378,12 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
                         <i className={`fas ${item.icon}`}></i> {item.label}
                       </Link>
                     ))}
-                    <button onClick={() => { closeMobileMenu(); openLogoutModal(); }}>
+                    <button
+                      onClick={() => {
+                        closeMobileMenu();
+                        openLogoutModal();
+                      }}
+                    >
                       <i className="fas fa-sign-out-alt"></i> Salir
                     </button>
                   </>
@@ -329,12 +412,22 @@ const Navbar = ({ isDashboard = false, toggleSidebar }) => {
         closeOnOverlayClick
       >
         <p style={{ margin: "1rem 0", lineHeight: "1.6" }}>
-          ¿Estás seguro de que deseas cerrar tu sesión? 
-          <strong style={{ display: "block", marginTop: "0.5rem", color: "#d32f2f" }}>
+          ¿Estás seguro de que deseas cerrar tu sesión?
+          <strong
+            style={{ display: "block", marginTop: "0.5rem", color: "#d32f2f" }}
+          >
             Perderás el acceso temporal al panel de control.
           </strong>
         </p>
-        <div className="modal-actions" style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1.5rem" }}>
+        <div
+          className="modal-actions"
+          style={{
+            display: "flex",
+            gap: "1rem",
+            justifyContent: "flex-end",
+            marginTop: "1.5rem",
+          }}
+        >
           <button
             type="button"
             onClick={cancelLogout}

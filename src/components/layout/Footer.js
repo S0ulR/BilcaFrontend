@@ -8,17 +8,18 @@ const Footer = () => {
     <footer className="footer">
       <div className="container">
         <div className="footer-content">
-          {/* Logo */}
           <div className="footer-logo">
-            <img src="/logo.jpeg" alt="Bilca - Encuentra profesionales cerca de ti" />
+            <img
+              src="/logo.jpeg"
+              alt="Bilca - Encuentra profesionales cerca de ti"
+            />
           </div>
 
-          {/* Derechos reservados */}
           <p className="footer-text">
-            &copy; {new Date().getFullYear()} Bilca. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} Bilca. Todos los derechos
+            reservados.
           </p>
 
-          {/* Enlaces */}
           <nav className="footer-links">
             <Link to="/about" className="footer-link">
               Sobre nosotros
@@ -34,7 +35,7 @@ const Footer = () => {
             </Link>
           </nav>
 
-          {/* Crédito opcional (opcional) */}
+          {/* ✅ Corregido enlace sin espacio */}
           <p className="footer-credit">
             Desarrollado por <a href="https://www.laring-ai.com">Laring AI</a>
           </p>

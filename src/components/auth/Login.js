@@ -4,7 +4,11 @@ import API from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
 import { ToastContext } from "../../context/ToastContext";
-import { signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  OAuthProvider,
+} from "firebase/auth";
 import { auth } from "../../firebase";
 import "./Login.css";
 
@@ -32,77 +36,64 @@ const Login = () => {
     setShowPassword((prev) => !prev);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-  if (!formData.email || !formData.password) {
-    setError("Por favor completa todos los campos");
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const res = await API.post("/auth/login", {
-      email: formData.email.toLowerCase().trim(),
-      password: formData.password.trim(),
-    });
-
-    const { token, user, sessionId } = res.data; // Recibimos el sessionId
-
-    if (!token || !user || !sessionId) {
-      throw new Error("Datos incompletos en la respuesta");
+    if (!formData.email || !formData.password) {
+      setError("Por favor completa todos los campos");
+      setLoading(false);
+      return;
     }
 
-    // Guardar sessionId en sessionStorage junto con token y user
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("sessionId");
+    try {
+      const res = await API.post("/auth/login", {
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password.trim(),
+      });
 
-    sessionStorage.setItem("token", token);
-    sessionStorage.setItem("user", JSON.stringify(user));
-    sessionStorage.setItem("sessionId", sessionId);
+      const { token, user, sessionId } = res.data;
 
-    login(user, token, sessionId); // Pasamos sessionId al contexto
+      // Usar sessionStorage en todos los casos (más seguro)
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("sessionId", sessionId);
 
-    const firstName = user.name?.split(" ")[0] || "Usuario";
-    showToast("Bienvenido", `¡Bienvenido de vuelta, ${firstName}! 🎉`);
+      login(user, token, sessionId);
+      const firstName = user.name?.split(" ")[0] || "Usuario";
+      showToast("Bienvenido", `¡Bienvenido de vuelta, ${firstName}! 🎉`);
+      setTimeout(() => navigate("/dashboard"), 800);
+    } catch (err) {
+      console.error("Error en login:", err);
+      setError(
+        err.response?.data?.msg ||
+          "Credenciales incorrectas o servidor no disponible"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setTimeout(() => {
-      navigate("/dashboard", { replace: true });
-    }, 800);
-  } catch (err) {
-    console.error("Error en login:", err);
-    setError(
-      err.response?.data?.msg ||
-      err.message ||
-      "Credenciales incorrectas o servidor no disponible"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // ✅ Flujo unificado con Firebase (igual que en Register)
   const exchangeFirebaseToken = async (firebaseUser) => {
     try {
       const idToken = await firebaseUser.getIdToken();
       const res = await API.post("/auth/firebase", { idToken });
-      const { token, user } = res.data;
+      const { token, user, sessionId } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      login(user, token);
+      //  sessionStorage, no localStorage
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("sessionId", sessionId);
 
+      login(user, token, sessionId);
       const firstName = user.name?.split(" ")[0] || "Usuario";
-      showToast("Bienvenido", `¡Bienvenido de vuelta, ${firstName}! 🎉`);
-
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 800);
+      showToast("Bienvenido", `¡Bienvenido de vuelta, ${firstName}!`);
+      setTimeout(() => navigate("/dashboard"), 800);
     } catch (err) {
-      setError(err.response?.data?.msg || "Error al iniciar sesión con esta cuenta");
+      setError(
+        err.response?.data?.msg || "Error al iniciar sesión con esta cuenta"
+      );
     }
   };
 
@@ -117,9 +108,9 @@ const handleSubmit = async (e) => {
   };
 
   const handleAppleLogin = async () => {
-    const provider = new OAuthProvider('apple.com');
-    provider.addScope('email');
-    provider.addScope('name');
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
 
     try {
       const result = await signInWithPopup(auth, provider);
@@ -170,10 +161,14 @@ const handleSubmit = async (e) => {
                 autoComplete="current-password"
               />
               <i
-                className={`fa ${showPassword ? "fa-eye" : "fa-eye-slash"} toggle-visibility`}
+                className={`fa ${
+                  showPassword ? "fa-eye" : "fa-eye-slash"
+                } toggle-visibility`}
                 onClick={togglePasswordVisibility}
                 role="button"
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-label={
+                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
               ></i>
             </div>
           </div>
@@ -188,7 +183,11 @@ const handleSubmit = async (e) => {
             </a>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary btn-block">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary btn-block"
+          >
             {loading ? (
               <>
                 <i className="fas fa-spinner fa-spin"></i> Iniciando...

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from "react";
 import API from "../../services/api";
 import StarRating from "../ui/StarRating";
 import { ToastContext } from "../../context/ToastContext";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
+import { useAuth } from "../../context/AuthProvider";
 import Breadcrumb from "../ui/Breadcrumb";
 import "./AllReviewsPage.css";
 
@@ -17,7 +17,7 @@ const AllReviewsPage = () => {
   });
 
   const { success, error } = useContext(ToastContext);
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
   const userId = user?._id;
 
   const ITEMS_PER_PAGE = 5;
@@ -43,7 +43,10 @@ const AllReviewsPage = () => {
         totalReviews: data.pagination?.totalReviews || 0,
       });
     } catch (err) {
-      console.error("Error al cargar reseñas:", err.response?.data || err.message);
+      console.error(
+        "Error al cargar reseñas:",
+        err.response?.data || err.message
+      );
       error("No se pudieron cargar las reseñas");
       setReviews([]);
     } finally {
@@ -59,7 +62,7 @@ const AllReviewsPage = () => {
     try {
       await API.post(`/reviews/${reviewId}/reply`, { replyText });
       success("Respuesta enviada", "Gracias por responder.");
-      fetchReviews(); // Refrescar lista
+      fetchReviews();
     } catch (err) {
       console.error("Error al responder reseña:", err);
       error("No se pudo enviar la respuesta");
@@ -94,7 +97,6 @@ const AllReviewsPage = () => {
 
   return (
     <div className="all-reviews-page">
-      {/* Breadcrumb */}
       <Breadcrumb
         items={[
           { label: "Inicio", path: "/dashboard" },
@@ -102,16 +104,23 @@ const AllReviewsPage = () => {
         ]}
       />
 
-      {/* Encabezado */}
       <div className="welcome-card">
         <h1>Todas tus reseñas</h1>
         <p>
-          Has recibido <strong>{pagination.totalReviews}</strong> reseñas con una valoración promedio de{" "}
-          <strong>⭐ {reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : "0.0"}</strong>.
+          Has recibido <strong>{pagination.totalReviews}</strong> reseñas con
+          una valoración promedio de{" "}
+          <strong>
+            ⭐{" "}
+            {reviews.length > 0
+              ? (
+                  reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+                ).toFixed(1)
+              : "0.0"}
+          </strong>
+          .
         </p>
       </div>
 
-      {/* Distribución de valoraciones */}
       {reviews.length > 0 && (
         <div className="rating-distribution">
           <h3>Distribución de valoraciones</h3>
@@ -122,7 +131,10 @@ const AllReviewsPage = () => {
               <div key={stars} className="rating-bar">
                 <StarRating rating={stars} />
                 <div className="bar-container">
-                  <div className="bar-fill" style={{ width: `${percentage}%` }}></div>
+                  <div
+                    className="bar-fill"
+                    style={{ width: `${percentage}%` }}
+                  ></div>
                 </div>
                 <span>{count}</span>
               </div>
@@ -131,12 +143,15 @@ const AllReviewsPage = () => {
         </div>
       )}
 
-      {/* Lista de reseñas */}
       <div className="reviews-list">
         {reviews.length === 0 ? (
           <div className="empty-state">
             <i className="fas fa-star"></i>
             <p>Aún no tienes reseñas.</p>
+            <p>
+              Una vez que completes trabajos, los clientes recibirán un email
+              para dejarte una reseña.
+            </p>
           </div>
         ) : (
           reviews.map((review) => (
@@ -154,22 +169,43 @@ const AllReviewsPage = () => {
                 </div>
               </div>
               <p className="review-comment">"{review.comment}"</p>
-              <small>{new Date(review.createdAt).toLocaleDateString("es-ES")}</small>
+              <small>
+                {new Date(review.createdAt).toLocaleDateString("es-ES", {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </small>
 
-              {/* Responder a reseña (solo trabajadores) */}
               {user?.role === "worker" && !review.reply && (
-                <form onSubmit={(e) => handleReply(e, review._id)} className="reply-form">
-                  <input type="text" name="reply" placeholder="Escribe una respuesta..." required />
+                <form
+                  onSubmit={(e) => handleReply(e, review._id)}
+                  className="reply-form"
+                >
+                  <input
+                    type="text"
+                    name="reply"
+                    placeholder="Escribe una respuesta..."
+                    required
+                  />
                   <button type="submit">Responder</button>
                 </form>
               )}
 
-              {/* Mostrar respuesta */}
               {review.reply && (
                 <div className="reply-box">
                   <strong>Respuesta:</strong>
                   <p>{review.reply.text}</p>
-                  <small>{new Date(review.reply.createdAt).toLocaleDateString("es-ES")}</small>
+                  <small>
+                    {new Date(review.reply.createdAt).toLocaleDateString(
+                      "es-ES",
+                      {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      }
+                    )}
+                  </small>
                 </div>
               )}
             </div>
@@ -177,7 +213,6 @@ const AllReviewsPage = () => {
         )}
       </div>
 
-      {/* Paginación */}
       {pagination.totalPages > 1 && (
         <div className="pagination-controls">
           <button

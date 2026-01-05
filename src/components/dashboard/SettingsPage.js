@@ -1,13 +1,13 @@
 // src/components/dashboard/SettingsPage.js
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
+import { useAuth } from "../../context/AuthProvider";
 import API from "../../services/api";
 import { ToastContext } from "../../context/ToastContext";
 import { useContext } from "react";
 import "./SettingsPage.css";
 
 const SettingsPage = () => {
-  const { user, login } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user, login } = useAuth();
   const { success: showSuccess, error: showError } = useContext(ToastContext);
 
   const [passwordData, setPasswordData] = useState({
@@ -28,7 +28,6 @@ const SettingsPage = () => {
     setPasswordData({ ...passwordData, [name]: value });
   };
 
-  // 🔐 Cambiar contraseña
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setError("");
@@ -57,7 +56,8 @@ const SettingsPage = () => {
       });
       showSuccess("Contraseña actualizada");
     } catch (err) {
-      const errorMsg = err.response?.data?.msg || "Error al cambiar la contraseña";
+      const errorMsg =
+        err.response?.data?.msg || "Error al cambiar la contraseña";
       setError(errorMsg);
       showError("No se pudo cambiar la contraseña");
     } finally {
@@ -65,7 +65,6 @@ const SettingsPage = () => {
     }
   };
 
-  // 📧 Notificaciones por email
   const handleNotificationChange = async (e) => {
     const checked = e.target.checked;
     setEmailNotifications(checked);
@@ -73,9 +72,15 @@ const SettingsPage = () => {
     setSuccess("");
 
     try {
-      const res = await API.put("/users/settings", { emailNotifications: checked });
+      const res = await API.put("/users/settings", {
+        emailNotifications: checked,
+      });
       setSuccess(res.data.msg);
-      login({ ...user, emailNotifications: checked }, sessionStorage.getItem("token"), sessionStorage.getItem("sessionId")); // ✅ Actualizar el contexto de autenticación
+      login(
+        { ...user, emailNotifications: checked },
+        sessionStorage.getItem("token"),
+        sessionStorage.getItem("sessionId")
+      );
       showSuccess("Preferencia guardada");
     } catch (err) {
       console.error("Error al guardar notificaciones:", err);
@@ -86,7 +91,6 @@ const SettingsPage = () => {
     }
   };
 
-  // 🔒 Privacidad
   const handlePrivacyChange = async (e) => {
     const value = e.target.value === "private";
     setIsPrivate(value);
@@ -96,7 +100,11 @@ const SettingsPage = () => {
     try {
       const res = await API.put("/users/settings", { isPrivate: value });
       setSuccess(res.data.msg);
-      login({ ...user, isPrivate: value }, sessionStorage.getItem("token"), sessionStorage.getItem("sessionId")); // ✅ Actualizar el contexto de autenticación
+      login(
+        { ...user, isPrivate: value },
+        sessionStorage.getItem("token"),
+        sessionStorage.getItem("sessionId")
+      );
       showSuccess("Privacidad actualizada");
     } catch (err) {
       console.error("Error al guardar privacidad:", err);
@@ -109,17 +117,14 @@ const SettingsPage = () => {
 
   return (
     <div className="settings-page">
-      {/* Bienvenida */}
       <div className="welcome-card">
         <h1>Configuración de Cuenta</h1>
         <p>Gestiona tu seguridad, notificaciones y privacidad</p>
       </div>
 
-      {/* Mensajes */}
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
 
-      {/* Sección: Seguridad */}
       <div className="settings-section">
         <h2>
           <i className="fas fa-lock"></i> Seguridad
@@ -164,7 +169,11 @@ const SettingsPage = () => {
             </div>
           </div>
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i> Actualizando...
@@ -177,7 +186,6 @@ const SettingsPage = () => {
         </form>
       </div>
 
-      {/* Sección: Notificaciones */}
       <div className="settings-section">
         <h2>
           <i className="fas fa-bell"></i> Notificaciones
@@ -189,7 +197,9 @@ const SettingsPage = () => {
               checked={emailNotifications}
               onChange={handleNotificationChange}
             />
-            <span className="toggle-text">Recibir notificaciones por correo</span>
+            <span className="toggle-text">
+              Recibir notificaciones por correo
+            </span>
           </label>
           <small className="toggle-hint">
             Te avisaremos sobre nuevas solicitudes, mensajes y más.
@@ -197,7 +207,6 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Sección: Privacidad */}
       <div className="settings-section">
         <h2>
           <i className="fas fa-shield-alt"></i> Privacidad
@@ -232,13 +241,23 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Estado del perfil */}
       <div className="profile-status">
-        <i className={`fas ${user.isPrivate ? "fa-user-secret" : "fa-globe-americas"}`}></i>
+        <i
+          className={`fas ${
+            user.isPrivate ? "fa-user-secret" : "fa-globe-americas"
+          }`}
+        ></i>
         <span>
-          Tu perfil está <strong>{user.isPrivate ? "privado" : "público"}</strong>.
+          Tu perfil está{" "}
+          <strong>{user.isPrivate ? "privado" : "público"}</strong>.
           {user.role === "worker" && (
-            <> Ofreces servicios como {user.services?.map(s => s.profession).join(", ") || "trabajador"}.</>
+            <>
+              {" "}
+              Ofreces servicios como{" "}
+              {user.services?.map((s) => s.profession).join(", ") ||
+                "trabajador"}
+              .
+            </>
           )}
         </span>
       </div>

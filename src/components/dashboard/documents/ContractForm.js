@@ -1,11 +1,11 @@
 // src/components/dashboard/ContractForm.js
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { generateContractPDF } from "../../utils/generateContractPDF";
-import { ToastContext } from "../../context/ToastContext";
-import { useAuth } from "../../context/AuthProvider";
-import API from "../../services/api";
-import Breadcrumb from "../ui/Breadcrumb";
+import { generateContractPDF } from "../../../utils/generateContractPDF";
+import { ToastContext } from "../../../context/ToastContext";
+import { useAuth } from "../../../context/AuthProvider";
+import API from "../../../services/api";
+import Breadcrumb from "../../ui/Breadcrumb";
 import "./ContractForm.css";
 
 const ContractForm = () => {
@@ -29,7 +29,7 @@ const ContractForm = () => {
   const [pendingContract, setPendingContract] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [sendingContract, setSendingContract] = useState(false); // Para el botón de enviar contrato
+  const [sendingContract, setSendingContract] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("pendingContract");
@@ -105,7 +105,6 @@ const ContractForm = () => {
     }
   };
 
-  // Nueva función combinada
   const handleSendContractAndEmail = async () => {
     if (!formData.clientEmail) {
       return error("Falta email", "Agrega el email del cliente para enviarlo.");
@@ -128,7 +127,6 @@ const ContractForm = () => {
     setSendingContract(true);
 
     try {
-      // 1. CREAR LA CONTRATACIÓN (Paso principal)
       const hireData = {
         worker: location.state?.workerId,
         client: user._id.trim(),
@@ -140,12 +138,10 @@ const ContractForm = () => {
         endDate: formData.endDate,
       };
 
-      const hireResponse = await API.post("/hires/create", hireData);
-      // ✅ La contratación se ha creado con éxito
+      // ✅ CORREGIDO: usar /hires en lugar de /hires/create
+      const hireResponse = await API.post("/hires", hireData);
 
-      // 2. INTENTAR ENVIAR POR EMAIL (Paso secundario, no bloqueante)
       try {
-        // Generar PDF
         const { jsPDF } = await import("jspdf");
         await import("jspdf-autotable");
         const doc = new jsPDF();
@@ -192,18 +188,15 @@ const ContractForm = () => {
         );
       } catch (emailError) {
         console.error("Error al enviar email (no bloqueante):", emailError);
-        // ✅ La contratación ya se creó, así que informamos al usuario y continuamos
         success(
           "Contratación creada",
           "La contratación fue creada exitosamente. El envío del email falló, pero el trabajador recibirá la notificación en la app."
         );
       }
 
-      // 3. Limpiar y redirigir
       sessionStorage.removeItem("pendingContract");
       navigate("/dashboard/hires/user");
     } catch (err) {
-      // ❌ Error al crear la contratación
       console.error("Error al crear contratación:", err);
       error(
         "Error",
@@ -260,7 +253,6 @@ const ContractForm = () => {
           <button type="button" onClick={handleSubmit} className="btn-download">
             <i className="fas fa-file-contract"></i> Descargar PDF
           </button>
-          {/* ✅ Botón unificado que hace ambas acciones */}
           <button
             type="button"
             onClick={handleSendContractAndEmail}

@@ -1,4 +1,4 @@
-// src/components/dashboard/SearchWorker.js
+// src/components/dashboard/DashboardHome.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./SearchWorker.css";
@@ -11,7 +11,6 @@ const SearchWorker = () => {
     minRating: "",
   });
 
-  // Lista de oficios con nombres bonitos (sincronizada con el backend)
   const professions = [
     { value: "plomero", label: "Plomero/a" },
     { value: "electricista", label: "Electricista" },
@@ -22,7 +21,7 @@ const SearchWorker = () => {
     { value: "pintor", label: "Pintor/a" },
     { value: "limpieza", label: "Limpieza" },
     { value: "paseador de perros", label: "Paseador de perros" },
-    { value: "cuidadores de adultos", label: "Cuidador/a de adultos mayores" }, // ✅ Corregido
+    { value: "cuidadores de adultos", label: "Cuidador/a de adultos mayores" },
     { value: "mudanzas", label: "Mudanzas" },
     { value: "gasista", label: "Gasista" },
   ];
@@ -51,7 +50,6 @@ const SearchWorker = () => {
       </div>
 
       <form onSubmit={handleSearch} className="search-form">
-        {/* Oficio */}
         <div className="form-group">
           <label htmlFor="profession">¿Qué servicio necesitas?</label>
           <select
@@ -70,7 +68,6 @@ const SearchWorker = () => {
           </select>
         </div>
 
-        {/* Ubicación */}
         <div className="form-group">
           <label htmlFor="location">Ubicación</label>
           <input
@@ -84,7 +81,6 @@ const SearchWorker = () => {
           />
         </div>
 
-        {/* Valoración mínima */}
         <div className="form-group">
           <label htmlFor="minRating">Valoración mínima</label>
           <select
@@ -101,19 +97,26 @@ const SearchWorker = () => {
           </select>
         </div>
 
-        {/* Botón buscar */}
         <button type="submit" className="btn-search">
           <i className="fas fa-search"></i> Buscar profesionales
         </button>
       </form>
 
-      {/* Consejos */}
       <div className="search-tips">
         <h3>💡 Consejos para una mejor búsqueda</h3>
         <ul>
-          <li><strong>Oficio:</strong> Selecciona el servicio específico que necesitas.</li>
-          <li><strong>Ubicación:</strong> Incluye ciudad o barrio para resultados cercanos.</li>
-          <li><strong>Valoración:</strong> Filtra por estrellas para mayor confianza.</li>
+          <li>
+            <strong>Oficio:</strong> Selecciona el servicio específico que
+            necesitas.
+          </li>
+          <li>
+            <strong>Ubicación:</strong> Incluye ciudad o barrio para resultados
+            cercanos.
+          </li>
+          <li>
+            <strong>Valoración:</strong> Filtra por estrellas para mayor
+            confianza.
+          </li>
         </ul>
       </div>
     </div>

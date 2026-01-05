@@ -1,0 +1,147 @@
+/* src/components/dashboard/InvoicesSent.css */
+.invoices-sent-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #2c3e50;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  color: #6c757d;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin: 2rem 0;
+}
+
+.loading-state i,
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  color: #4a9d9c;
+}
+
+.empty-state i {
+  color: #ddd;
+}
+
+.empty-state h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.4rem;
+  color: #495057;
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+.btn-create {
+  background: linear-gradient(135deg, #4a9d9c, #3a7f7e);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(74, 157, 156, 0.2);
+}
+
+.btn-create:hover {
+  background: linear-gradient(135deg, #3a7f7e, #2a5f5e);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(74, 157, 156, 0.3);
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.draft {
+  background: #e2e3e5;
+  color: #383d41;
+}
+.status-badge.sent {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+.status-badge.viewed {
+  background: #bee5eb;
+  color: #0c5460;
+}
+.status-badge.paid {
+  background: #d4edda;
+  color: #155724;
+}
+.status-badge.overdue {
+  background: #f8d7da;
+  color: #721c24;
+}
+.status-badge.cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.5rem;
+    text-align: left;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .invoices-sent-page {
+    padding: 0 0.5rem;
+  }
+
+  .page-title {
+    font-size: 1.3rem;
+  }
+
+  .btn-create {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+  }
+}

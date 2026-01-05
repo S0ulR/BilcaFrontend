@@ -2,7 +2,11 @@
 import React, { useState, useContext } from "react";
 import API from "../../services/api";
 import { useNavigate, Link } from "react-router-dom";
-import { signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  OAuthProvider,
+} from "firebase/auth";
 import { auth } from "../../firebase";
 import { ToastContext } from "../../context/ToastContext";
 import "./Register.css";
@@ -17,7 +21,7 @@ const Register = ({ setUser }) => {
     password: "",
     confirmPassword: "",
     role: "user",
-    country: "", // ahora es un valor del select
+    country: "",
     professions: [],
   });
   const [error, setError] = useState("");
@@ -26,7 +30,6 @@ const Register = ({ setUser }) => {
   const navigate = useNavigate();
   const { success: showToast } = useContext(ToastContext);
 
-  // Países de América (hispanohablantes + Brasil)
   const countries = [
     "Argentina",
     "Bolivia",
@@ -37,7 +40,7 @@ const Register = ({ setUser }) => {
     "Cuba",
     "Ecuador",
     "El Salvador",
-    "España", // opcional, pero común
+    "España",
     "Estados Unidos",
     "Guatemala",
     "Honduras",
@@ -104,9 +107,10 @@ const Register = ({ setUser }) => {
     e.preventDefault();
     setError("");
 
-    // Validaciones básicas
     if (!isValidName) {
-      setError("El nombre debe tener al menos 2 letras y no contener números ni símbolos.");
+      setError(
+        "El nombre debe tener al menos 2 letras y no contener números ni símbolos."
+      );
       return;
     }
 
@@ -115,7 +119,6 @@ const Register = ({ setUser }) => {
       return;
     }
 
-    // ✅ Validar campos obligatorios no vacíos
     if (!formData.country.trim()) {
       setError("Debes seleccionar un país.");
       return;
@@ -160,12 +163,11 @@ const Register = ({ setUser }) => {
       return;
     }
 
-    // ✅ Preparar payload seguro
     const dataToSend = {
       name: formData.name.trim(),
       city: formData.city.trim(),
       phone: formData.phone.trim(),
-      country: formData.country.trim(), // ahora siempre es un valor válido
+      country: formData.country.trim(),
       birthday: formData.birthday,
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
@@ -173,22 +175,23 @@ const Register = ({ setUser }) => {
     };
 
     if (formData.role === "worker") {
-      dataToSend.services = formData.professions.map(prof => ({
+      dataToSend.services = formData.professions.map((prof) => ({
         profession: prof,
-        // hourlyRate y bio se omiten → backend los maneja como opcionales
+        isActive: true,
       }));
     }
 
     try {
       const res = await API.post("/auth/register", dataToSend);
-      const { token, user } = res.data;
+      const { token, user, sessionId } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("sessionId", sessionId);
       if (setUser) setUser(user);
 
       const firstName = user.name.split(" ")[0];
-      showToast("Cuenta creada", `¡Bienvenido a Bilca, ${firstName}! 🎉`);
+      showToast("Cuenta creada", `¡Bienvenido a Bilca, ${firstName}!`);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.msg || "Error en el registro");
@@ -198,7 +201,6 @@ const Register = ({ setUser }) => {
   const getLabel = (value) =>
     validProfessions.find((p) => p.value === value)?.label || value;
 
-  // === Firebase OAuth ===
   const handleGoogleSignUp = async () => {
     const provider = new GoogleAuthProvider();
     try {
@@ -210,9 +212,9 @@ const Register = ({ setUser }) => {
   };
 
   const handleAppleSignUp = async () => {
-    const provider = new OAuthProvider('apple.com');
-    provider.addScope('email');
-    provider.addScope('name');
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
 
     try {
       const result = await signInWithPopup(auth, provider);
@@ -226,14 +228,15 @@ const Register = ({ setUser }) => {
     try {
       const idToken = await firebaseUser.getIdToken();
       const res = await API.post("/auth/firebase", { idToken });
-      const { token, user } = res.data;
+      const { token, user, sessionId } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("sessionId", sessionId);
       if (setUser) setUser(user);
 
       const firstName = user.name.split(" ")[0];
-      showToast("Cuenta creada", `¡Bienvenido a Bilca, ${firstName}! 🎉`);
+      showToast("Cuenta creada", `¡Bienvenido a Bilca, ${firstName}!`);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.msg || "Error al conectar con el servidor");
@@ -245,13 +248,15 @@ const Register = ({ setUser }) => {
       <div className="register-card">
         <div className="register-header">
           <h1>Bilca</h1>
-          <p>Crea tu cuenta y comienza a ofrecer servicios o encontrar profesionales</p>
+          <p>
+            Crea tu cuenta y comienza a ofrecer servicios o encontrar
+            profesionales
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="register-form">
           {error && <div className="error">{error}</div>}
 
-          {/* Nombre */}
           <div className="input-group stacked">
             <label htmlFor="name">Nombre</label>
             <div className="input-wrapper">
@@ -266,7 +271,6 @@ const Register = ({ setUser }) => {
             </div>
           </div>
 
-          {/* Fecha de nacimiento y ciudad */}
           <div className="form-grid">
             <div className="input-group stacked">
               <label htmlFor="birthday">Fecha de nacimiento</label>
@@ -297,7 +301,6 @@ const Register = ({ setUser }) => {
             </div>
           </div>
 
-          {/* País y teléfono */}
           <div className="form-grid">
             <div className="input-group stacked">
               <label htmlFor="country">País</label>
@@ -334,7 +337,6 @@ const Register = ({ setUser }) => {
             </div>
           </div>
 
-          {/* Email */}
           <div className="input-group stacked">
             <label htmlFor="email">Email</label>
             <div className="input-wrapper">
@@ -351,7 +353,6 @@ const Register = ({ setUser }) => {
             </div>
           </div>
 
-          {/* Contraseña */}
           <div className="input-group stacked">
             <label htmlFor="password">Contraseña</label>
             <div className="input-wrapper">
@@ -366,15 +367,18 @@ const Register = ({ setUser }) => {
                 autoComplete="new-password"
               />
               <i
-                className={`fa ${showPassword ? "fa-eye" : "fa-eye-slash"} toggle-visibility`}
+                className={`fa ${
+                  showPassword ? "fa-eye" : "fa-eye-slash"
+                } toggle-visibility`}
                 onClick={() => setShowPassword(!showPassword)}
                 role="button"
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-label={
+                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
               ></i>
             </div>
           </div>
 
-          {/* Confirmar contraseña */}
           <div className="input-group stacked">
             <label htmlFor="confirmPassword">Confirmar contraseña</label>
             <div className="input-wrapper">
@@ -389,34 +393,52 @@ const Register = ({ setUser }) => {
                 autoComplete="new-password"
               />
               <i
-                className={`fa ${showConfirmPassword ? "fa-eye" : "fa-eye-slash"} toggle-visibility`}
+                className={`fa ${
+                  showConfirmPassword ? "fa-eye" : "fa-eye-slash"
+                } toggle-visibility`}
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 role="button"
-                aria-label={showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"}
+                aria-label={
+                  showConfirmPassword
+                    ? "Ocultar confirmación"
+                    : "Mostrar confirmación"
+                }
               ></i>
             </div>
           </div>
 
-          {/* Requisitos de contraseña */}
           <div className="password-requirements">
-            <p style={{ color: passwordRequirements.length ? "green" : "#999" }}>
+            <p
+              style={{ color: passwordRequirements.length ? "green" : "#999" }}
+            >
               • Mínimo 8 caracteres
             </p>
-            <p style={{ color: passwordRequirements.uppercase ? "green" : "#999" }}>
+            <p
+              style={{
+                color: passwordRequirements.uppercase ? "green" : "#999",
+              }}
+            >
               • Al menos una mayúscula
             </p>
-            <p style={{ color: passwordRequirements.number ? "green" : "#999" }}>
+            <p
+              style={{ color: passwordRequirements.number ? "green" : "#999" }}
+            >
               • Al menos un número
             </p>
-            <p style={{ color: passwordRequirements.special ? "green" : "#999" }}>
+            <p
+              style={{ color: passwordRequirements.special ? "green" : "#999" }}
+            >
               • Carácter especial (!@#$%...)
             </p>
-            <p style={{ color: passwordRequirements.notCommon ? "green" : "#999" }}>
+            <p
+              style={{
+                color: passwordRequirements.notCommon ? "green" : "#999",
+              }}
+            >
               • No usar contraseñas comunes
             </p>
           </div>
 
-          {/* Rol */}
           <div className="radio-group">
             <label>
               <input
@@ -440,7 +462,6 @@ const Register = ({ setUser }) => {
             </label>
           </div>
 
-          {/* Profesiones (solo si es trabajador) */}
           {formData.role === "worker" && (
             <div className="checkbox-group">
               <label className="group-label">Selecciona tus oficios:</label>
@@ -461,7 +482,6 @@ const Register = ({ setUser }) => {
             </div>
           )}
 
-          {/* Botones sociales */}
           <div className="social-login">
             <button
               type="button"
@@ -481,7 +501,6 @@ const Register = ({ setUser }) => {
             </button>
           </div>
 
-          {/* Botón principal */}
           <button type="submit" className="btn-primary btn-block">
             Registrarse
           </button>

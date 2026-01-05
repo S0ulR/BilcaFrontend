@@ -1,23 +1,33 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './SearchWorker.css';
+// src/components/dashboard/SearchWorker.js
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./SearchWorker.css";
 
 const SearchWorker = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
-    profession: '',
-    location: '',
-    minRating: ''
+    profession: "",
+    location: "",
+    minRating: "",
   });
 
-  const professions = ['plomero', 'electricista', 'niñero', 'albañil', 'jardinero', 'carpintero', 'pintor', 'limpieza'];
+  const professions = [
+    "plomero",
+    "electricista",
+    "niñero",
+    "albañil",
+    "jardinero",
+    "carpintero",
+    "pintor",
+    "limpieza",
+  ];
 
   const handleSearch = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (filters.profession) params.append('oficio', filters.profession);
-    if (filters.location) params.append('ubicacion', filters.location);
-    if (filters.minRating) params.append('rating', filters.minRating);
+    if (filters.profession) params.append("oficio", filters.profession);
+    if (filters.location) params.append("ubicacion", filters.location);
+    if (filters.minRating) params.append("rating", filters.minRating);
 
     navigate(`/workers?${params.toString()}`);
   };
@@ -28,7 +38,6 @@ const SearchWorker = () => {
 
   return (
     <div className="search-worker-page">
-
       <div className="search-header">
         <h1>Encuentra al profesional ideal</h1>
         <p>Busca por oficio, ubicación o valoración mínima.</p>
@@ -44,8 +53,10 @@ const SearchWorker = () => {
             required
           >
             <option value="">Selecciona un oficio</option>
-            {professions.map(p => (
-              <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+            {professions.map((p) => (
+              <option key={p} value={p}>
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </option>
             ))}
           </select>
         </div>

@@ -1,12 +1,14 @@
 // src/components/dashboard/Messages.js
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../../services/api";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
+import { useAuth } from "../../context/AuthProvider";
 import Breadcrumb from "../ui/Breadcrumb";
 import { getSocket } from "../../services/socket";
 import "./Messages.css";
 
 const Messages = () => {
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -15,7 +17,7 @@ const Messages = () => {
   const [uploading, setUploading] = useState(false);
   const [typingUser, setTypingUser] = useState(null);
 
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
 
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
@@ -24,10 +26,9 @@ const Messages = () => {
 
   const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-  // Validación y carga inicial
   useEffect(() => {
     if (!user || !user._id) {
-      window.location.href = "/login";
+      navigate("/login", { replace: true });
       return;
     }
 
@@ -35,16 +36,24 @@ const Messages = () => {
       loadConversations();
       setIsLoaded(true);
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, navigate]);
 
-  // Inicializar Socket.IO
   useEffect(() => {
     if (!user?._id || initialized.current) return;
 
     initialized.current = true;
-    const token = sessionStorage.getItem("token"); // ✅ Cambiado a sessionStorage
+    const token = sessionStorage.getItem("token");
+    
+    // ✅ Verificación de token
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     const socket = getSocket(token, user._id);
     socketRef.current = socket;
+
+    // ✅ Ya no necesitas verificar socket porque getSocket siempre devuelve una instancia
 
     socket.on("connect", () => {
       console.log("✅ Socket conectado:", socket.id);
@@ -98,14 +107,12 @@ const Messages = () => {
         socket.close();
       }
     };
-  }, [user]);
+  }, [user, navigate]);
 
-  // Scroll automático
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Evento de "escribiendo"
   useEffect(() => {
     if (!socketRef.current || !selected || !newMessage.trim()) return;
 
@@ -158,20 +165,27 @@ const Messages = () => {
         c._id === convId
           ? {
               ...c,
-              lastMessage: c.lastMessage ? { ...c.lastMessage, read: true } : null,
+              lastMessage: c.lastMessage
+                ? { ...c.lastMessage, read: true }
+                : null,
             }
           : c
       )
     );
   };
 
-  // Subida de archivo
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !selected) return;
 
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
-    const maxSize = 10 * 1024 * 1024; // 10 MB
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ];
+    const maxSize = 10 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       alert("Solo se permiten imágenes (JPG, PNG, WEBP) y PDFs.");
@@ -199,7 +213,7 @@ const Messages = () => {
       alert("No se pudo subir el archivo.");
     } finally {
       setUploading(false);
-      e.target.value = ""; // Limpiar input
+      e.target.value = "";
     }
   };
 
@@ -210,7 +224,9 @@ const Messages = () => {
     setLoading(true);
     try {
       const conversation = conversations.find((c) => c._id === selected);
-      const recipient = conversation?.participants.find((p) => p._id !== user._id);
+      const recipient = conversation?.participants.find(
+        (p) => p._id !== user._id
+      );
 
       if (!recipient) {
         console.error("Destinatario no encontrado");
@@ -236,7 +252,10 @@ const Messages = () => {
         conversationId: selected,
       });
     } catch (err) {
-      console.error("Error al enviar mensaje:", err.response?.data || err.message);
+      console.error(
+        "Error al enviar mensaje:",
+        err.response?.data || err.message
+      );
       alert("No se pudo enviar el mensaje.");
     } finally {
       setLoading(false);
@@ -251,7 +270,6 @@ const Messages = () => {
 
   return (
     <div className="chat-container">
-      {/* Breadcrumb */}
       <Breadcrumb
         items={[
           { label: "Inicio", path: "/dashboard" },
@@ -259,14 +277,12 @@ const Messages = () => {
         ]}
       />
 
-      {/* Encabezado */}
       <div className="welcome-card">
         <h1>Chat</h1>
         <p>Comunícate directamente con clientes o trabajadores.</p>
       </div>
 
       <div className="chat-layout">
-        {/* Sidebar: Conversaciones */}
         <div className="chat-sidebar">
           <div className="chat-header">
             <h3>
@@ -277,33 +293,41 @@ const Messages = () => {
             {conversations.length === 0 ? (
               <p className="no-conversations">
                 <i className="fas fa-comments"></i>
-                <br />Aún no tienes conversaciones
+                <br />
+                Aún no tienes conversaciones
               </p>
             ) : (
               conversations.map((conv) => {
                 const other = conv.participants.find((p) => p._id !== user._id);
                 const lastMsg = conv.lastMessage?.content || "Sin mensajes";
                 const isUnread =
-                  conv.lastMessage?.sender !== user._id && !conv.lastMessage?.read;
+                  conv.lastMessage?.sender !== user._id &&
+                  !conv.lastMessage?.read;
 
                 return (
                   <div
                     key={conv._id}
-                    className={`chat-conversation ${selected === conv._id ? "active" : ""} ${
-                      isUnread ? "unread" : ""
-                    }`}
+                    className={`chat-conversation ${
+                      selected === conv._id ? "active" : ""
+                    } ${isUnread ? "unread" : ""}`}
                     onClick={() => loadMessages(conv._id)}
                   >
                     <div className="avatar">
                       <img
                         src={other?.photo || "/assets/default-avatar.png"}
                         alt={other?.name}
-                        onError={(e) => (e.target.src = "/assets/default-avatar.png")}
+                        onError={(e) =>
+                          (e.target.src = "/assets/default-avatar.png")
+                        }
                       />
                     </div>
                     <div className="conversation-info">
                       <strong>{other?.name || "Usuario"}</strong>
-                      <p>{lastMsg.length > 50 ? `${lastMsg.substring(0, 50)}...` : lastMsg}</p>
+                      <p>
+                        {lastMsg.length > 50
+                          ? `${lastMsg.substring(0, 50)}...`
+                          : lastMsg}
+                      </p>
                     </div>
                     {isUnread && <div className="dot"></div>}
                   </div>
@@ -313,7 +337,6 @@ const Messages = () => {
           </div>
         </div>
 
-        {/* Chat principal */}
         <div className="chat-main">
           {selected ? (
             <>
@@ -322,7 +345,9 @@ const Messages = () => {
                   <img
                     src={otherUser?.photo || "/assets/default-avatar.png"}
                     alt={otherUser?.name}
-                    onError={(e) => (e.target.src = "/assets/default-avatar.png")}
+                    onError={(e) =>
+                      (e.target.src = "/assets/default-avatar.png")
+                    }
                   />
                   <div>
                     <strong>{otherUser?.name}</strong>
@@ -334,20 +359,24 @@ const Messages = () => {
               <div className="chat-messages">
                 {typingUser && (
                   <div className="typing-indicator">
-                    <i className="fas fa-comment-dots"></i> {typingUser} está escribiendo...
+                    <i className="fas fa-comment-dots"></i> {typingUser} está
+                    escribiendo...
                   </div>
                 )}
 
                 {messages.length === 0 ? (
-                  <p className="no-messages">Aún no hay mensajes en esta conversación.</p>
+                  <p className="no-messages">
+                    Aún no hay mensajes en esta conversación.
+                  </p>
                 ) : (
                   messages.map((msg) => (
                     <div
                       key={msg._id}
-                      className={`message ${msg.sender._id === user._id ? "sent" : "received"}`}
+                      className={`message ${
+                        msg.sender._id === user._id ? "sent" : "received"
+                      }`}
                     >
                       <div className="message-content">
-                        {/* Previsualización de imagen o enlace de archivo */}
                         {msg.file ? (
                           msg.file.type === "image" ? (
                             <div className="file-preview">
@@ -410,11 +439,17 @@ const Messages = () => {
               <form onSubmit={sendMessage} className="chat-input">
                 <label className="file-upload">
                   <i className="fas fa-paperclip"></i>
-                  <input type="file" onChange={handleFileUpload} disabled={uploading} />
+                  <input
+                    type="file"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                  />
                 </label>
                 <input
                   type="text"
-                  placeholder={uploading ? "Subiendo..." : "Escribe un mensaje..."}
+                  placeholder={
+                    uploading ? "Subiendo..." : "Escribe un mensaje..."
+                  }
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   disabled={loading || uploading}
@@ -430,9 +465,15 @@ const Messages = () => {
             </>
           ) : (
             <div className="chat-placeholder">
-              <i className="fas fa-comments fa-3x" style={{ color: "#ccc" }}></i>
+              <i
+                className="fas fa-comments fa-3x"
+                style={{ color: "#ccc" }}
+              ></i>
               <h4>Selecciona una conversación</h4>
-              <p>Para comenzar a chatear, selecciona una conversación de la izquierda.</p>
+              <p>
+                Para comenzar a chatear, selecciona una conversación de la
+                izquierda.
+              </p>
             </div>
           )}
         </div>
