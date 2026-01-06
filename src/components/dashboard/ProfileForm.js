@@ -1,12 +1,12 @@
 // src/components/dashboard/ProfileForm.js
 import React, { useState, useEffect, useContext } from "react";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
+import { useAuth } from "../../context/AuthProvider";
 import API from "../../services/api";
 import { ToastContext } from "../../context/ToastContext";
 import "./ProfileForm.css";
 
 const ProfileForm = ({ onUpdateUser }) => {
-  const { user: currentUser, login } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user: currentUser, login } = useAuth();
   const { success: showSuccess, error: showError } = useContext(ToastContext);
 
   const [originalData, setOriginalData] = useState({});
@@ -26,6 +26,7 @@ const ProfileForm = ({ onUpdateUser }) => {
   const [success, setSuccess] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [loading, setLoading] = useState(true); // ✅ Estado de carga
 
   const [services, setServices] = useState([]);
   const [availableProfessions] = useState([
@@ -43,79 +44,83 @@ const ProfileForm = ({ onUpdateUser }) => {
     "gasista",
   ]);
 
-  // ✅ Inicializar datos personales
+  // ✅ Cargar perfil completo al montar el componente
   useEffect(() => {
-    if (!currentUser) {
-      setError("No estás autenticado.");
-      return;
-    }
+    const loadFullProfile = async () => {
+      if (!currentUser?._id) {
+        setLoading(false);
+        return;
+      }
 
-    const userPhoto = currentUser.photo || "/assets/default-avatar.png";
+      setLoading(true);
+      try {
+        const res = await API.get(`/users/${currentUser._id}`);
+        const fullUser = res.data;
 
-    const data = {
-      name: currentUser.name || "",
-      city: currentUser.city || "",
-      country: currentUser.country || "",
-      phone: currentUser.phone || "",
-      birthday: currentUser.birthday ? new Date(currentUser.birthday).toISOString().split('T')[0] : "",
-      bio: currentUser.bio || "",
-      hourlyRate: currentUser.hourlyRate || "",
-      address: currentUser.location?.address || "",
-      photo: "",
+        if (onUpdateUser) onUpdateUser(fullUser);
+
+        const formatBirthday = (date) => {
+          if (!date) return "";
+          const d = new Date(date);
+          return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+        };
+
+        const data = {
+          name: fullUser.name || "",
+          city: fullUser.city || "",
+          country: fullUser.country || "",
+          phone: fullUser.phone || "",
+          birthday: formatBirthday(fullUser.birthday),
+          bio: fullUser.bio || "",
+          hourlyRate: fullUser.hourlyRate || "",
+          address: fullUser.location?.address || "",
+          photo: "",
+        };
+
+        setOriginalData(data);
+        setFormData(data);
+        setPreview(fullUser.photo || "/assets/default-avatar.png");
+        initializeServicesFromUser(fullUser);
+      } catch (err) {
+        console.error("Error al cargar perfil completo:", err);
+        showError("No se pudo cargar tu perfil completo");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setOriginalData(data);
-    setFormData(data);
-    setPreview(userPhoto);
+    loadFullProfile();
+  }, [currentUser?._id]);
 
-    // Solo inicializa servicios si estamos en pestaña de perfil (no sobrescribe)
-    if (activeTab === "profile") {
-      initializeServicesFromUser(currentUser);
-    }
-  }, [currentUser]);
-
-  // ✅ Cargar servicios completos cuando se cambia a la pestaña "Mis servicios"
-  useEffect(() => {
-    if (activeTab === "services" && currentUser?._id) {
-      loadFullUser();
-    }
-  }, [activeTab, currentUser?._id]); // ✅ Correcto: _id como dependencia válida
-
-  // ✅ Cargar usuario completo desde API
   const loadFullUser = async () => {
     try {
       const res = await API.get(`/users/${currentUser._id}`);
       const freshUser = res.data;
 
-      // Actualizar contexto global y sessionStorage
       if (onUpdateUser) onUpdateUser(freshUser);
-      login(freshUser, sessionStorage.getItem("token"), sessionStorage.getItem("sessionId")); // ✅ Actualizar el contexto de autenticación
+      login();
 
-      // Inicializar servicios con datos frescos
       initializeServicesFromUser(freshUser);
     } catch (err) {
       console.error("Error al cargar usuario desde API:", err);
       showError("No se pudieron cargar tus servicios. Revisa tu conexión.");
-      // Fallback al currentUser si falla la API
       initializeServicesFromUser(currentUser);
     }
   };
 
-  // ✅ Normaliza y establece servicios
   const initializeServicesFromUser = (user) => {
     const servicesArray = Array.isArray(user.services)
-      ? user.services.map(s => ({
+      ? user.services.map((s) => ({
           profession: s.profession || "",
           hourlyRate: s.hourlyRate !== undefined ? Number(s.hourlyRate) : "",
-          bio: s.bio || ""
+          bio: s.bio || "",
         }))
       : [];
-    
+
     setServices(servicesArray);
     setIsDirty(false);
   };
 
-  // ✅ Detectar cambios en datos personales Y servicios
   useEffect(() => {
     if (!currentUser) return;
 
@@ -124,23 +129,31 @@ const ProfileForm = ({ onUpdateUser }) => {
       formData.city !== (currentUser.city || "") ||
       formData.country !== (currentUser.country || "") ||
       formData.phone !== (currentUser.phone || "") ||
-      formData.birthday !== (currentUser.birthday ? new Date(currentUser.birthday).toISOString().split('T')[0] : "") ||
+      formData.birthday !==
+        (currentUser.birthday
+          ? new Date(currentUser.birthday).toISOString().split("T")[0]
+          : "") ||
       formData.bio !== (currentUser.bio || "") ||
       formData.hourlyRate !== (currentUser.hourlyRate || "") ||
       formData.address !== (currentUser.location?.address || "") ||
       formData.photo instanceof File;
 
     const currentServices = Array.isArray(currentUser.services)
-      ? currentUser.services.map(s => ({
-          profession: s.profession,
-          hourlyRate: s.hourlyRate,
-          bio: s.bio
-        })).sort((a, b) => a.profession.localeCompare(b.profession))
+      ? currentUser.services
+          .map((s) => ({
+            profession: s.profession,
+            hourlyRate: s.hourlyRate,
+            bio: s.bio,
+          }))
+          .sort((a, b) => a.profession.localeCompare(b.profession))
       : [];
 
-    const localServices = [...services].sort((a, b) => a.profession.localeCompare(b.profession));
+    const localServices = [...services].sort((a, b) =>
+      a.profession.localeCompare(b.profession)
+    );
 
-    const hasServiceChanges = JSON.stringify(currentServices) !== JSON.stringify(localServices);
+    const hasServiceChanges =
+      JSON.stringify(currentServices) !== JSON.stringify(localServices);
 
     setIsDirty(hasProfileChanges || hasServiceChanges);
   }, [formData, services, currentUser]);
@@ -165,22 +178,21 @@ const ProfileForm = ({ onUpdateUser }) => {
     });
     const userPhoto = currentUser?.photo || "/assets/default-avatar.png";
     setPreview(userPhoto);
-    
+
     const currentServices = Array.isArray(currentUser.services)
-      ? currentUser.services.map(s => ({
+      ? currentUser.services.map((s) => ({
           profession: s.profession || "",
           hourlyRate: s.hourlyRate !== undefined ? Number(s.hourlyRate) : "",
-          bio: s.bio || ""
+          bio: s.bio || "",
         }))
       : [];
-      
+
     setServices(currentServices);
     setIsDirty(false);
     setError("");
     setSuccess("");
   };
 
-  // Manejo de servicios
   const handleServiceChange = (index, field, value) => {
     const newServices = [...services];
     newServices[index][field] = value;
@@ -201,30 +213,37 @@ const ProfileForm = ({ onUpdateUser }) => {
     if (!confirm) return;
 
     try {
-      const res = await API.delete(`/users/services/${serviceToRemove.profession}`);
-      
+      const res = await API.delete(
+        `/users/services/${serviceToRemove.profession}`
+      );
+
       const updatedUser = res.data.user;
       const newUser = { ...currentUser, ...updatedUser };
 
-      // Actualizar estado local
       const normalizedServices = Array.isArray(updatedUser.services)
-        ? updatedUser.services.map(s => ({
+        ? updatedUser.services.map((s) => ({
             profession: s.profession || "",
             hourlyRate: s.hourlyRate !== undefined ? Number(s.hourlyRate) : "",
-            bio: s.bio || ""
+            bio: s.bio || "",
           }))
         : [];
-        
+
       setServices(normalizedServices);
       if (onUpdateUser) onUpdateUser(newUser);
-      login(newUser, sessionStorage.getItem("token"), sessionStorage.getItem("sessionId")); // ✅ Actualizar el contexto de autenticación
+      login(
+        newUser,
+        sessionStorage.getItem("token"),
+        sessionStorage.getItem("sessionId")
+      );
 
-      const msg = normalizedServices.length > 0 
-        ? res.data.msg 
-        : "Ya no ofreces servicios. Tu perfil ha sido actualizado.";
+      const msg =
+        normalizedServices.length > 0
+          ? res.data.msg
+          : "Ya no ofreces servicios. Tu perfil ha sido actualizado.";
       showSuccess(msg);
     } catch (err) {
-      const errorMsg = err.response?.data?.msg || "Error al eliminar el servicio";
+      const errorMsg =
+        err.response?.data?.msg || "Error al eliminar el servicio";
       showError(errorMsg);
     }
   };
@@ -267,28 +286,40 @@ const ProfileForm = ({ onUpdateUser }) => {
 
       if (activeTab === "services") {
         if (services.length === 0) {
-          return setError("Debes agregar al menos un servicio para convertirte en trabajador.");
+          return setError(
+            "Debes agregar al menos un servicio para convertirte en trabajador."
+          );
         }
 
-        // Validación: campos vacíos
         for (let s of services) {
-          if (!s.profession || s.hourlyRate === "" || s.hourlyRate === null || s.hourlyRate === undefined) {
+          if (
+            !s.profession ||
+            s.hourlyRate === "" ||
+            s.hourlyRate === null ||
+            s.hourlyRate === undefined
+          ) {
             return setError("Completa todos los campos de cada servicio");
           }
         }
 
-        // Validación: duplicados
-        const professions = services.map(s => s.profession);
-        const duplicates = professions.filter((p, i) => professions.indexOf(p) !== i);
+        const professions = services.map((s) => s.profession);
+        const duplicates = professions.filter(
+          (p, i) => professions.indexOf(p) !== i
+        );
         if (duplicates.length > 0) {
-          return setError(`Ya estás ofreciendo este servicio: ${duplicates.join(", ")}. No puedes repetirlo.`);
+          return setError(
+            `Ya estás ofreciendo este servicio: ${duplicates.join(
+              ", "
+            )}. No puedes repetirlo.`
+          );
         }
 
         data = { services };
         endpoint = `/users/services`;
-        msg = services.length > 0
-          ? "¡Tus servicios han sido actualizados con éxito!"
-          : "Servicios actualizados";
+        msg =
+          services.length > 0
+            ? "¡Tus servicios han sido actualizados con éxito!"
+            : "Servicios actualizados";
       }
 
       const res = await API.put(endpoint, data, {
@@ -300,27 +331,29 @@ const ProfileForm = ({ onUpdateUser }) => {
 
       const updatedUser = { ...currentUser, ...res.data.user };
       if (onUpdateUser) onUpdateUser(updatedUser);
-      login(updatedUser, sessionStorage.getItem("token"), sessionStorage.getItem("sessionId")); // ✅ Actualizar el contexto de autenticación
 
-      // Sincronizar estados locales
       setOriginalData({
         name: updatedUser.name || "",
         city: updatedUser.city || "",
         country: updatedUser.country || "",
         phone: updatedUser.phone || "",
-        birthday: updatedUser.birthday ? new Date(updatedUser.birthday).toISOString().split('T')[0] : "",
+        birthday: updatedUser.birthday
+          ? new Date(updatedUser.birthday).toISOString().split("T")[0]
+          : "",
         bio: updatedUser.bio || "",
         hourlyRate: updatedUser.hourlyRate || "",
         address: updatedUser.location?.address || "",
       });
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         name: updatedUser.name,
         city: updatedUser.city,
         country: updatedUser.country,
         phone: updatedUser.phone,
-        birthday: updatedUser.birthday ? new Date(updatedUser.birthday).toISOString().split('T')[0] : "",
+        birthday: updatedUser.birthday
+          ? new Date(updatedUser.birthday).toISOString().split("T")[0]
+          : "",
         bio: updatedUser.bio,
         hourlyRate: updatedUser.hourlyRate,
         address: updatedUser.location?.address,
@@ -328,26 +361,39 @@ const ProfileForm = ({ onUpdateUser }) => {
       }));
 
       setPreview(updatedUser.photo || "/assets/default-avatar.png");
-      
+
       const normalizedServices = Array.isArray(res.data.user.services)
-        ? res.data.user.services.map(s => ({
+        ? res.data.user.services.map((s) => ({
             profession: s.profession || "",
             hourlyRate: s.hourlyRate !== undefined ? Number(s.hourlyRate) : "",
-            bio: s.bio || ""
+            bio: s.bio || "",
           }))
         : [];
-        
+
       setServices(normalizedServices);
       setIsDirty(false);
 
       setSuccess(msg);
     } catch (err) {
       console.error("Error al guardar cambios:", err);
-      const errorMsg = err.response?.data?.msg 
-        || "Error al actualizar el perfil. Verifica los campos.";
+      const errorMsg =
+        err.response?.data?.msg ||
+        "Error al actualizar el perfil. Verifica los campos.";
       setError(errorMsg);
     }
   };
+
+  // ✅ Manejar estado de carga y errores
+  if (loading) {
+    return (
+      <div className="profile-page">
+        <div className="loading-state">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Cargando perfil...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -359,13 +405,11 @@ const ProfileForm = ({ onUpdateUser }) => {
 
   return (
     <div className="profile-page">
-      {/* Bienvenida */}
       <div className="welcome-card">
         <h1>Editar Perfil</h1>
         <p>Gestiona tu información personal y servicios ofrecidos</p>
       </div>
 
-      {/* Solapas */}
       <div className="tabs">
         <button
           className={activeTab === "profile" ? "active" : ""}
@@ -385,14 +429,12 @@ const ProfileForm = ({ onUpdateUser }) => {
         </button>
       </div>
 
-      {/* Mensajes */}
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
 
       <form onSubmit={handleSubmit} className="profile-form">
         {activeTab === "profile" && (
           <>
-            {/* Formulario de perfil */}
             <div className="form-grid">
               <div className="form-group">
                 <label>Nombre *</label>
@@ -526,10 +568,24 @@ const ProfileForm = ({ onUpdateUser }) => {
           <div className="services-tab">
             {services.length === 0 ? (
               <div className="convert-prompt">
-                <i className="fas fa-tools" style={{ fontSize: "2rem", color: "#4a9d9c", marginBottom: "0.5rem" }}></i>
+                <i
+                  className="fas fa-tools"
+                  style={{
+                    fontSize: "2rem",
+                    color: "#4a9d9c",
+                    marginBottom: "0.5rem",
+                  }}
+                ></i>
                 <h3>¿Quieres ofrecer servicios?</h3>
-                <p>Agrega tus habilidades y conviértete en un profesional visible para miles de usuarios.</p>
-                <button type="button" onClick={convertToWorker} className="btn-convert">
+                <p>
+                  Agrega tus habilidades y conviértete en un profesional visible
+                  para miles de usuarios.
+                </p>
+                <button
+                  type="button"
+                  onClick={convertToWorker}
+                  className="btn-convert"
+                >
                   ✅ Comenzar a ofrecer servicios
                 </button>
               </div>
@@ -538,25 +594,35 @@ const ProfileForm = ({ onUpdateUser }) => {
                 <p>Gestiona los servicios que ofreces:</p>
                 {services.map((service, index) => {
                   const usedProfessions = services
-                    .map(s => s.profession)
+                    .map((s) => s.profession)
                     .filter((_, i) => i !== index);
                   const available = availableProfessions.filter(
-                    p => !usedProfessions.includes(p)
+                    (p) => !usedProfessions.includes(p)
                   );
 
                   return (
                     <div key={index} className="service-row">
                       <select
                         value={service.profession || ""}
-                        onChange={(e) => handleServiceChange(index, 'profession', e.target.value)}
+                        onChange={(e) =>
+                          handleServiceChange(
+                            index,
+                            "profession",
+                            e.target.value
+                          )
+                        }
                         required
                       >
                         <option value="">Selecciona un oficio</option>
-                        {availableProfessions.map(p => {
-                          const isUsed = usedProfessions.includes(p) && service.profession !== p;
+                        {availableProfessions.map((p) => {
+                          const isUsed =
+                            usedProfessions.includes(p) &&
+                            service.profession !== p;
                           return (
                             <option key={p} value={p} disabled={isUsed}>
-                              {isUsed ? `(✔️) ${p}` : p.charAt(0).toUpperCase() + p.slice(1)}
+                              {isUsed
+                                ? `(✔️) ${p}`
+                                : p.charAt(0).toUpperCase() + p.slice(1)}
                             </option>
                           );
                         })}
@@ -565,14 +631,22 @@ const ProfileForm = ({ onUpdateUser }) => {
                         type="number"
                         placeholder="Tarifa por hora (COP)"
                         value={service.hourlyRate || ""}
-                        onChange={(e) => handleServiceChange(index, 'hourlyRate', e.target.value)}
+                        onChange={(e) =>
+                          handleServiceChange(
+                            index,
+                            "hourlyRate",
+                            e.target.value
+                          )
+                        }
                         required
                         min="0"
                       />
                       <textarea
                         placeholder="Describe tu servicio..."
                         value={service.bio || ""}
-                        onChange={(e) => handleServiceChange(index, 'bio', e.target.value)}
+                        onChange={(e) =>
+                          handleServiceChange(index, "bio", e.target.value)
+                        }
                         rows="2"
                       />
                       <button
@@ -590,21 +664,24 @@ const ProfileForm = ({ onUpdateUser }) => {
                   type="button"
                   onClick={addService}
                   className="btn-add"
-                  disabled={availableProfessions.every(p =>
-                    services.some(s => s.profession === p)
+                  disabled={availableProfessions.every((p) =>
+                    services.some((s) => s.profession === p)
                   )}
                 >
                   + Agregar otro servicio
                 </button>
-                {availableProfessions.every(p => services.some(s => s.profession === p)) && (
-                  <p className="no-more-services">Has agregado todos los servicios disponibles.</p>
+                {availableProfessions.every((p) =>
+                  services.some((s) => s.profession === p)
+                ) && (
+                  <p className="no-more-services">
+                    Has agregado todos los servicios disponibles.
+                  </p>
                 )}
               </>
             )}
           </div>
         )}
 
-        {/* Acciones */}
         <div className="form-actions">
           <button
             type="button"
@@ -614,11 +691,7 @@ const ProfileForm = ({ onUpdateUser }) => {
           >
             Cancelar
           </button>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={!isDirty}
-          >
+          <button type="submit" className="btn btn-primary" disabled={!isDirty}>
             Guardar cambios
           </button>
         </div>

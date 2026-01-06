@@ -7,7 +7,6 @@ import "./Documents.css";
 const Documents = () => {
   return (
     <div className="documents-page">
-      {/* Breadcrumb */}
       <Breadcrumb
         items={[
           { label: "Inicio", path: "/dashboard" },
@@ -15,15 +14,14 @@ const Documents = () => {
         ]}
       />
 
-      {/* Encabezado */}
       <div className="welcome-card">
         <h1>Genera documentos profesionales</h1>
         <p>
-          Crea presupuestos, contratos y facturas con solo unos clics. Todo listo para compartir.
+          Crea presupuestos, contratos y facturas con solo unos clics. Todo
+          listo para compartir.
         </p>
       </div>
 
-      {/* Grid de documentos */}
       <div className="documents-grid">
         <Link to="/dashboard/documents/budget" className="doc-card">
           <i className="fas fa-calculator"></i>

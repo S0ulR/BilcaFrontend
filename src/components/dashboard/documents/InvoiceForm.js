@@ -1,17 +1,17 @@
 // src/components/dashboard/InvoiceForm.js
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
-import { ToastContext } from "../../context/ToastContext";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
-import Breadcrumb from "../ui/Breadcrumb";
-import API from "../../services/api";
+import { generateInvoicePDF } from "../../../utils/generateInvoicePDF";
+import { ToastContext } from "../../../context/ToastContext";
+import { useAuth } from "../../../context/AuthProvider";
+import Breadcrumb from "../../ui/Breadcrumb";
+import API from "../../../services/api";
 import "./InvoiceForm.css";
 
 const InvoiceForm = () => {
   const navigate = useNavigate();
   const { success, error } = useContext(ToastContext);
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
 
   const [items, setItems] = useState([
     { description: "", quantity: 1, rate: 0, amount: 0 },
@@ -88,7 +88,7 @@ const InvoiceForm = () => {
       worker: {
         name: user?.name,
         profession: user?.services?.[0]?.profession || "Trabajador",
-      }, // ✅ Obtener datos del usuario logueado
+      },
       items: items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
@@ -124,7 +124,7 @@ const InvoiceForm = () => {
       worker: {
         name: user?.name,
         profession: user?.professions?.[0] || "Trabajador",
-      }, // ✅ Obtener datos del usuario logueado
+      },
       items: items.map((item) => ({
         description: item.description,
         quantity: item.quantity,
@@ -138,7 +138,6 @@ const InvoiceForm = () => {
     };
 
     try {
-      // 🔹 Intentar generar PDF en memoria (opcional)
       let pdfBlob = null;
       try {
         const { jsPDF } = await import("jspdf");
@@ -210,7 +209,6 @@ const InvoiceForm = () => {
         );
       }
 
-      // 🔹 Crear datos del formulario
       const formDataToSend = new FormData();
       formDataToSend.append("to", data.client.email);
       formDataToSend.append(
@@ -222,7 +220,6 @@ const InvoiceForm = () => {
         `<p>Hola ${data.client.name},</p><p>Adjunto encontrarás la factura por <strong>${data.totalAmount}</strong>.</p>`
       );
 
-      // Adjuntar PDF solo si existe
       if (pdfBlob) {
         const fileName = `factura_${data.invoiceNumber}_${data.client.name}.pdf`;
         formDataToSend.append("attachment", pdfBlob, fileName);

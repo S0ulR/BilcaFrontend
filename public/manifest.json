@@ -1,9 +1,25 @@
 {
   "short_name": "Bilca",
   "name": "Bilca App",
-  "icons": [],
+  "icons": [
+    {
+      "src": "logoBilca-SF.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logoBilca-SF.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logoBilca-SF-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#4a9d9c",
   "background_color": "#ffffff"
 }

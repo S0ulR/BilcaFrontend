@@ -1,5 +1,6 @@
 // src/components/ui/Modal.js
 import React, { useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import "./Modal.css";
 
 const Modal = ({
@@ -7,7 +8,7 @@ const Modal = ({
   onClose,
   title,
   children,
-  size = "md", // 'sm', 'md', 'lg'
+  size = "md",
   closeOnOverlayClick = true,
   closeOnEscape = true,
   showCloseButton = true,
@@ -15,7 +16,6 @@ const Modal = ({
   const modalRef = useRef();
   const dialogRef = useRef();
 
-  // Soporte para tecla ESC
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape" && closeOnEscape && isOpen) {
@@ -32,7 +32,6 @@ const Modal = ({
     };
   }, [isOpen, onClose, closeOnEscape]);
 
-  // Enfocar automáticamente el modal al abrir
   useEffect(() => {
     if (isOpen && dialogRef.current) {
       dialogRef.current.focus();
@@ -41,7 +40,8 @@ const Modal = ({
 
   if (!isOpen) return null;
 
-  return (
+  // ✅ Renderiza el modal directamente en el body
+  return ReactDOM.createPortal(
     <div
       className={`modal-overlay ${isOpen ? "open" : ""}`}
       onClick={closeOnOverlayClick ? onClose : undefined}
@@ -53,7 +53,7 @@ const Modal = ({
         ref={dialogRef}
         className={`modal modal-${size}`}
         onClick={(e) => e.stopPropagation()}
-        tabIndex="-1" // Necesario para foco con .focus()
+        tabIndex="-1"
       >
         <div className="modal-header">
           <h3 id="modal-title">{title}</h3>
@@ -70,7 +70,8 @@ const Modal = ({
 
         <div className="modal-content">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

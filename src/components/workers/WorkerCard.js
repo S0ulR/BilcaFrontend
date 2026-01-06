@@ -16,21 +16,74 @@ const StarRating = ({ rating, size = "1rem" }) => {
               : "far fa-star"
           }
           aria-hidden="true"
-        ></i>
+        />
       ))}
     </div>
   );
 };
 
 const WorkerCard = ({ worker, onClick }) => {
-  const isTopRated = worker.rating >= 4.8;
+  // ========================
+  // FLAGS DE NEGOCIO
+  // ========================
+  const isRecommended = worker.subscriptionTier === "featured";
+
+  const isVerified =
+    worker.subscriptionTier === "professional" ||
+    worker.subscriptionTier === "featured";
+
+  const isTopRated = typeof worker.rating === "number" && worker.rating >= 4.8;
+
   const isNew =
-    !isTopRated &&
     worker.createdAt &&
     new Date() - new Date(worker.createdAt) < 30 * 24 * 60 * 60 * 1000;
 
+  // ========================
+  // BADGES (ACUMULATIVOS + JERARQUÍA)
+  // ========================
+  const badges = [];
+
+  if (isRecommended) {
+    badges.push({
+      key: "recommended",
+      className: "recommended",
+      icon: "fa-star",
+      label: "Recomendado",
+    });
+  }
+
+  if (isVerified) {
+    badges.push({
+      key: "verified",
+      className: "verified",
+      icon: "fa-check-circle",
+      label: "Verificado",
+    });
+  }
+
+  if (isTopRated) {
+    badges.push({
+      key: "top-rated",
+      className: "top-rated",
+      icon: "fa-award",
+      label: "Mejor valorado",
+    });
+  }
+
+  if (isNew) {
+    badges.push({
+      key: "new",
+      className: "new",
+      icon: "fa-clock",
+      label: "Usuario nuevo",
+    });
+  }
+
+  // ========================
+  // SERVICIOS
+  // ========================
   const activeServices = Array.isArray(worker.services)
-    ? worker.services.filter(s => s.isActive !== false)
+    ? worker.services.filter((s) => s.isActive !== false)
     : [];
 
   const displayedServices = activeServices.slice(0, 2);
@@ -39,11 +92,63 @@ const WorkerCard = ({ worker, onClick }) => {
 
   return (
     <div className="worker-card" onClick={onClick} role="button" tabIndex={0}>
-      {/* Badges arriba a la derecha */}
-      <div className="worker-badges">
-        {isTopRated && <span className="badge top-rated">⭐ Mejor Valorado</span>}
-        {isNew && <span className="badge new">🆕 Nuevo</span>}
-      </div>
+      {badges.length > 0 && (
+        <div className="worker-badges-container">
+          {/* BADGES - ESTILOS EN LÍNEA (SIN CSS EXTERNO) */}
+          {badges.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.3rem",
+                zIndex: 10,
+                pointerEvents: "none", // evita interferir con el onClick del card
+              }}
+            >
+              {badges.map((b) => {
+                let badgeStyle = {
+                  fontSize: "0.6rem",
+                  padding: "0.25rem 0.5rem",
+                  fontWeight: "bold",
+                  borderRadius: "50px",
+                  color: "white",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  background: "gray", // fallback
+                };
+
+                // Aplicamos colores específicos
+                if (b.className === "top-rated") {
+                  badgeStyle.background =
+                    "linear-gradient(135deg, #ff9d00, #d48000)";
+                } else if (b.className === "new") {
+                  badgeStyle.background =
+                    "linear-gradient(135deg, #2e8b57, #226a42)";
+                } else if (b.className === "verified") {
+                  badgeStyle.background =
+                    "linear-gradient(135deg, #1e88e5, #0d47a1)";
+                } else if (b.className === "recommended") {
+                  badgeStyle.background =
+                    "linear-gradient(135deg, #ff5722, #e64a19)";
+                }
+
+                return (
+                  <span key={b.key} style={badgeStyle}>
+                    <i className={`fas ${b.icon}`}></i>
+                    {b.label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="worker-photo-container">
         <img
@@ -57,20 +162,22 @@ const WorkerCard = ({ worker, onClick }) => {
       <h3 className="worker-name">{worker.name}</h3>
 
       <p className="worker-profession">
-        <i className="fas fa-briefcase"></i>{" "}
+        <i className="fas fa-briefcase" />{" "}
         {mainService?.profession
-          ? mainService.profession.charAt(0).toUpperCase() + mainService.profession.slice(1)
+          ? mainService.profession.charAt(0).toUpperCase() +
+            mainService.profession.slice(1)
           : "Sin oficio"}
       </p>
 
       {mainService?.hourlyRate && (
         <p className="worker-rate">
-          <i className="fas fa-tag"></i> ${mainService.hourlyRate.toLocaleString()} / hora
+          <i className="fas fa-tag" /> $
+          {mainService.hourlyRate.toLocaleString()} / hora
         </p>
       )}
 
       <p className="worker-location">
-        <i className="fas fa-map-marker-alt"></i>{" "}
+        <i className="fas fa-map-marker-alt" />{" "}
         {worker.location?.address || worker.city || "Ubicación no disponible"}
       </p>
 
@@ -95,16 +202,21 @@ const WorkerCard = ({ worker, onClick }) => {
         <div className="worker-services-tags">
           {displayedServices.map((service, i) => (
             <span key={i} className="service-tag">
-              {service.profession.charAt(0).toUpperCase() + service.profession.slice(1)}
+              {service.profession.charAt(0).toUpperCase() +
+                service.profession.slice(1)}
             </span>
           ))}
-          {hasMore && <span className="service-tag service-tag-more">+{activeServices.length - 2}</span>}
+          {hasMore && (
+            <span className="service-tag service-tag-more">
+              +{activeServices.length - 2}
+            </span>
+          )}
         </div>
       )}
 
       <div className="worker-actions">
         <button className="btn btn-gradient">
-          Ver perfil <i className="fas fa-arrow-right"></i>
+          Ver perfil <i className="fas fa-arrow-right" />
         </button>
       </div>
     </div>

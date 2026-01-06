@@ -1,16 +1,16 @@
+// components/ui/InactivityModal.js (CORREGIDO)
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "./Modal";
 import { useAuth } from "../../context/AuthProvider";
 
 const InactivityModal = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60); // 60 segundos para extender la sesión
+  const [timeLeft, setTimeLeft] = useState(60);
   const [isActive, setIsActive] = useState(true);
   const { user, logout } = useAuth();
   const timerRef = useRef(null);
   const countdownRef = useRef(null);
 
-  // Reiniciar temporizador de inactividad
   const resetInactivityTimer = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setIsActive(true);
@@ -19,7 +19,7 @@ const InactivityModal = () => {
 
     if (countdownRef.current) clearInterval(countdownRef.current);
 
-    // Temporizador de inactividad (24hs)
+    // ✅ Solo establecer el temporizador de inactividad
     timerRef.current = setTimeout(() => {
       setIsActive(false);
       setIsOpen(true);
@@ -27,14 +27,13 @@ const InactivityModal = () => {
     }, 24 * 60 * 60 * 1000); // 24 horas
   };
 
-  // Iniciar cuenta regresiva
   const startCountdown = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
     countdownRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(countdownRef.current);
-          handleLogout(); // Cerrar sesión por inactividad
+          handleLogout();
           return 0;
         }
         return prev - 1;
@@ -42,7 +41,6 @@ const InactivityModal = () => {
     }, 1000);
   };
 
-  // Extender sesión
   const extendSession = () => {
     setIsOpen(false);
     setTimeLeft(60);
@@ -50,19 +48,17 @@ const InactivityModal = () => {
     resetInactivityTimer();
   };
 
-  // Cerrar sesión
   const handleLogout = () => {
     setIsOpen(false);
     if (countdownRef.current) clearInterval(countdownRef.current);
     logout();
   };
 
-  // Escuchar eventos de inactividad
   useEffect(() => {
     if (user) {
       const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click", "keydown"];
       events.forEach((event) => window.addEventListener(event, resetInactivityTimer));
-      resetInactivityTimer(); // Iniciar al cargar
+      resetInactivityTimer();
 
       return () => {
         events.forEach((event) => window.removeEventListener(event, resetInactivityTimer));
@@ -72,7 +68,6 @@ const InactivityModal = () => {
     }
   }, [user]);
 
-  // Limpiar al desmontar
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);

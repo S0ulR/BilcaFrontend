@@ -40,7 +40,6 @@ const WorkerList = () => {
     "gasista",
   ];
 
-  // Sincronizar oficio de URL
   useEffect(() => {
     if (oficio && !filters.profession) {
       const normalized = oficio.toLowerCase();
@@ -52,7 +51,6 @@ const WorkerList = () => {
     }
   }, [oficio, filters.profession, professions]);
 
-  // Cargar trabajadores desde backend
   useEffect(() => {
     const fetchWorkers = async () => {
       setLoading(true);
@@ -82,19 +80,16 @@ const WorkerList = () => {
         }
 
         const res = await API.get("/workers", { params });
-        
-        // ✅ Normalizar workers para compatibilidad con WorkerCard
-        const normalizedWorkers = res.data.map(worker => {
+
+        // Normalizar workers para compatibilidad con WorkerCard
+        const normalizedWorkers = res.data.map((worker) => {
           const activeServices = Array.isArray(worker.services)
-            ? worker.services.filter(s => s.isActive !== false)
+            ? worker.services.filter((s) => s.isActive !== false)
             : [];
 
           return {
             ...worker,
-            // Para mantener compatibilidad con diseño anterior
-            profession: activeServices[0]?.profession || "",
-            hourlyRate: activeServices[0]?.hourlyRate,
-            services: activeServices, // ya está bien
+            services: activeServices,
           };
         });
 
@@ -111,31 +106,28 @@ const WorkerList = () => {
     fetchWorkers();
   }, [filters.profession, filters.location]);
 
-  // Aplicar filtros avanzados (frontend)
   const filteredWorkers = workers
     .filter((w) => {
-      // Filtro por profesión específica
       if (filters.profession) {
         const hasService = w.services?.some(
-          s => s.profession.toLowerCase() === filters.profession.toLowerCase()
+          (s) => s.profession.toLowerCase() === filters.profession.toLowerCase()
         );
         if (!hasService) return false;
       }
 
-      // Radio
       if (filters.radius && w.distance) {
         if (w.distance > parseInt(filters.radius)) return false;
       }
 
-      // Rating mínimo
       if (filters.minRating && w.rating < parseFloat(filters.minRating)) {
         return false;
       }
 
-      // Precio máximo
       if (
         filters.maxHourlyRate &&
-        w.hourlyRate > parseFloat(filters.maxHourlyRate)
+        w.services?.some(
+          (s) => s.hourlyRate > parseFloat(filters.maxHourlyRate)
+        )
       ) {
         return false;
       }
@@ -147,13 +139,14 @@ const WorkerList = () => {
       if (filters.sortBy === "proximity" && a.distance && b.distance) {
         return a.distance - b.distance;
       }
-      if (filters.sortBy === "price" && a.hourlyRate && b.hourlyRate) {
-        return a.hourlyRate - b.hourlyRate;
+      if (filters.sortBy === "price") {
+        const aRate = a.services?.[0]?.hourlyRate || 0;
+        const bRate = b.services?.[0]?.hourlyRate || 0;
+        return aRate - bRate;
       }
       return 0;
     });
 
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const totalPages = Math.ceil(filteredWorkers.length / itemsPerPage);
@@ -169,20 +162,29 @@ const WorkerList = () => {
     }
   };
 
-  // Resetear página al cambiar filtros
   useEffect(() => {
     setCurrentPage(1);
   }, [filters, workers]);
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+const handleFilterChange = (e) => {
+  const { name, value } = e.target;
+  const newFilters = { ...filters, [name]: value };
+  setFilters(newFilters);
 
-    if (name === "profession") {
-      const search = value ? `?oficio=${value.toLowerCase()}` : "";
-      navigate(`/workers${search}`, { replace: true });
-    }
-  };
+  // Actualizar URL con TODOS los filtros
+  const searchParams = new URLSearchParams();
+  if (newFilters.profession) {
+    searchParams.set('oficio', newFilters.profession.toLowerCase());
+  }
+  if (newFilters.location) {
+    searchParams.set('ubicacion', newFilters.location);
+  }
+  if (newFilters.minRating) {
+    searchParams.set('rating', newFilters.minRating);
+  }
+  
+  navigate(`/workers?${searchParams.toString()}`, { replace: true });
+};
 
   const getLoadingMessage = () => {
     if (!filters.profession) return "Cargando todos los trabajadores...";

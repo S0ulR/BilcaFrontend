@@ -13,47 +13,46 @@ const AboutUs = () => {
         ]}
       />
       <div className="about-content">
-        <h1 className="page-title">Sobre Laring-AI</h1>
+        <h1 className="page-title">Sobre Bilca</h1>
         <p className="intro-text">
-          Somos Laring-AI, una empresa dedicada al desarrollo de soluciones tecnológicas
-          innovadoras, centradas en la ciberseguridad y la inteligencia artificial.
+          Somos Bilca, una plataforma dedicada a conectar trabajadores
+          informales con personas que necesitan servicios cercanos y confiables
+          en Latinoamérica.
         </p>
 
         <div className="about-section">
           <h2 className="section-title">Nuestra Misión</h2>
           <p>
-            Nuestra misión es proporcionar herramientas accesibles y efectivas que empoderen
-            a las personas y organizaciones para navegar con seguridad en el entorno digital.
-            Buscamos simplificar la ciberseguridad mediante soluciones impulsadas por IA,
-            ofreciendo productos confiables y fáciles de usar para clientes en Latinoamérica.
+            Nuestra misión es empoderar a trabajadores informales y conectarlos
+            con quienes necesitan sus servicios, promoviendo la economía local y
+            el trabajo digno en toda Latinoamérica.
           </p>
         </div>
 
         <div className="about-section">
           <h2 className="section-title">Nuestra Visión</h2>
           <p>
-            Ser reconocidos como líderes en el desarrollo de plataformas tecnológicas
-            que protejan, conecten y potencien a nuestros usuarios y clientes, garantizando
-            la privacidad, la integridad y la confianza en cada interacción.
+            Ser la plataforma líder en Latinoamérica para la contratación de
+            servicios informales, basada en confianza, valoraciones reales y
+            cercanía geográfica.
           </p>
         </div>
 
         <div className="about-section">
-          <h2 className="section-title">Nuestros Productos</h2>
+          <h2 className="section-title">Nuestros Valores</h2>
           <p>
-            Nuestro portafolio incluye tres productos SaaS clave: <strong>Laring Guard</strong>,
-            una plataforma de ciberseguridad; <strong>Laring Compliance</strong>, para automatización
-            de cumplimiento normativo; y <strong>Laring Sentinel</strong>, un servicio de monitoreo
-            de credenciales y dominios.
+            Trabajamos con transparencia, inclusión y compromiso social. Creemos
+            en el poder del trabajo informal y en su capacidad para transformar
+            comunidades.
           </p>
         </div>
 
         <div className="about-section">
           <h2 className="section-title">Nuestro Compromiso</h2>
           <p>
-            Nos comprometemos a la excelencia, la innovación constante y la responsabilidad
-            social. Nuestro equipo trabaja incansablemente para ofrecer servicios de alta calidad
-            que se adapten a las necesidades cambiantes del entorno digital.
+            Nos comprometemos a ofrecer una plataforma segura, accesible y fácil
+            de usar que beneficie tanto a quienes ofrecen servicios como a
+            quienes los necesitan.
           </p>
         </div>
       </div>

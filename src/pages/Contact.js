@@ -28,14 +28,17 @@ const Contact = () => {
       return;
     }
 
-    // Simular envío del formulario
     try {
-      // Aquí iría la lógica para enviar el formulario a tu backend
-      // await API.post("/contact", formData);
-      success("¡Mensaje enviado!", "Gracias por contactarnos, te responderemos a la brevedad.");
+      success(
+        "¡Mensaje enviado!",
+        "Gracias por contactarnos, te responderemos a la brevedad."
+      );
       setFormData({ name: "", email: "", message: "" });
     } catch (err) {
-      error("Error", "No se pudo enviar el mensaje. Inténtalo de nuevo más tarde.");
+      error(
+        "Error",
+        "No se pudo enviar el mensaje. Inténtalo de nuevo más tarde."
+      );
     }
   };
 
@@ -59,19 +62,31 @@ const Contact = () => {
             <ul className="contact-list">
               <li className="contact-item">
                 <i className="fab fa-whatsapp"></i>
-                <a href="https://wa.me/5491112345678" target="_blank" rel="noopener noreferrer">
+                <a
+                  href="https://wa.me/5491112345678"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   +54 9 11 1234-5678
                 </a>
               </li>
               <li className="contact-item">
                 <i className="fab fa-instagram"></i>
-                <a href="https://www.instagram.com/laring.ai" target="_blank" rel="noopener noreferrer">
+                <a
+                  href="https://www.instagram.com/laring.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   @laring.ai
                 </a>
               </li>
               <li className="contact-item">
                 <i className="fab fa-linkedin"></i>
-                <a href="https://www.linkedin.com/company/laring-ai" target="_blank" rel="noopener noreferrer">
+                <a
+                  href="https://www.linkedin.com/company/laring-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Laring AI
                 </a>
               </li>

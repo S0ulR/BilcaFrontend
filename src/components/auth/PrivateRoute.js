@@ -1,3 +1,4 @@
+// src/components/auth/PrivateRoute.js
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
 
@@ -16,4 +17,3 @@ const PrivateRoute = ({ children }) => {
 };
 
 export default PrivateRoute;
-

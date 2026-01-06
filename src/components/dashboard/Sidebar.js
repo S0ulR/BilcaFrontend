@@ -1,33 +1,54 @@
 // src/components/layout/Sidebar.js
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
+import { useAuth } from "../../context/AuthProvider";
 import { useNotifications } from "../../context/NotificationContext";
-import "../layout/DashboardLayout.css"
+import "../layout/DashboardLayout.css";
 
 const Sidebar = ({ onLogout, isOpen, toggle }) => {
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
   const { unreadCount } = useNotifications();
 
   const menuItems = [
-    { path: "/dashboard/search", icon: "fas fa-search", label: "Buscar trabajador" },
-    { path: "/dashboard/hires", icon: "fas fa-handshake", label: "Mis contrataciones" },
+    {
+      path: "/dashboard/search",
+      icon: "fas fa-search",
+      label: "Buscar trabajador",
+    },
+    {
+      path: "/dashboard/hires",
+      icon: "fas fa-handshake",
+      label: "Mis contrataciones",
+    },
     { path: "/dashboard/messages", icon: "fas fa-envelope", label: "Mensajes" },
-    { path: "/dashboard/documents", icon: "fas fa-file-invoice", label: "Contratos" },
+    {
+      path: "/dashboard/documents",
+      icon: "fas fa-file-invoice",
+      label: "Contratos",
+    },
     ...(user?.role === "worker"
       ? [
-          { path: "/dashboard/worker", icon: "fas fa-chart-line", label: "Dashboard" },
+          {
+            path: "/dashboard/worker",
+            icon: "fas fa-chart-line",
+            label: "Dashboard",
+          },
           { path: "/dashboard/reviews", icon: "fas fa-star", label: "Reseñas" },
+          {
+            path: "/dashboard/subscription",
+            icon: "fas fa-crown",
+            label: "Suscripción",
+          },
         ]
       : []),
-    { 
-      path: "/dashboard/notifications", 
-      icon: "fas fa-bell", 
-      label: "Notificaciones", 
-      badge: unreadCount 
+    {
+      path: "/dashboard/notifications",
+      icon: "fas fa-bell",
+      label: "Notificaciones",
+      badge: unreadCount,
     },
     { path: "/dashboard/profile", icon: "fas fa-user", label: "Perfil" },
-    { path: "/dashboard/settings", icon: "fas fa-cog", label: "Configuración" }
+    { path: "/dashboard/settings", icon: "fas fa-cog", label: "Configuración" },
   ];
 
   const handleLinkClick = () => {
@@ -42,8 +63,14 @@ const Sidebar = ({ onLogout, isOpen, toggle }) => {
         <div className="logo">
           <img src="/logoFO.jpeg" alt="Bilca" className="logo-img" />
         </div>
-        <button onClick={toggle} className="collapse-btn" aria-label="Toggle menu">
-          <i className={`fas ${isOpen ? "fa-chevron-left" : "fa-chevron-right"}`}></i>
+        <button
+          onClick={toggle}
+          className="collapse-btn"
+          aria-label="Toggle menu"
+        >
+          <i
+            className={`fas ${isOpen ? "fa-chevron-left" : "fa-chevron-right"}`}
+          ></i>
         </button>
       </div>
 
@@ -58,12 +85,7 @@ const Sidebar = ({ onLogout, isOpen, toggle }) => {
               >
                 <i className={item.icon}></i>
                 {isOpen && <span className="label">{item.label}</span>}
-                {/* Tooltip en modo colapsado (opcional pero útil) */}
-                {!isOpen && (
-                  <span className="tooltip" aria-hidden="true">
-                    {item.label}
-                  </span>
-                )}
+                {!isOpen && <span className="tooltip">{item.label}</span>}
                 {item.badge > 0 && <span className="badge">{item.badge}</span>}
               </Link>
             </li>

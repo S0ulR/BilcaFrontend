@@ -1,16 +1,16 @@
 // src/components/dashboard/OfferService.js
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthProvider'; // Nuevo
-import API from '../../services/api';
-import './OfferService.css';
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthProvider";
+import API from "../../services/api";
+import "./OfferService.css";
 
 const OfferService = () => {
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    profession: '',
-    bio: '',
-    hourlyRate: '',
-    address: ''
+    profession: "",
+    bio: "",
+    hourlyRate: "",
+    address: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -18,10 +18,19 @@ const OfferService = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await API.put('/api/worker/profile', formData);
-      alert('Perfil actualizado como trabajador');
+      // ✅ Corregido: ruta sin /api (tu API.js lo maneja)
+      await API.put("/users/services", {
+        services: [
+          {
+            profession: formData.profession,
+            bio: formData.bio,
+            hourlyRate: formData.hourlyRate,
+          },
+        ],
+      });
+      alert("Perfil actualizado como trabajador");
     } catch (err) {
-      alert('Error al actualizar perfil');
+      alert("Error al actualizar perfil");
     } finally {
       setLoading(false);
     }
@@ -33,7 +42,9 @@ const OfferService = () => {
       <form onSubmit={handleSubmit}>
         <select
           value={formData.profession}
-          onChange={e => setFormData({ ...formData, profession: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, profession: e.target.value })
+          }
           required
         >
           <option value="">Selecciona tu oficio</option>
@@ -47,7 +58,7 @@ const OfferService = () => {
         <textarea
           placeholder="Cuéntanos sobre ti (opcional)"
           value={formData.bio}
-          onChange={e => setFormData({ ...formData, bio: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
           rows="4"
         />
 
@@ -55,19 +66,23 @@ const OfferService = () => {
           type="number"
           placeholder="Tarifa por hora (opcional)"
           value={formData.hourlyRate}
-          onChange={e => setFormData({ ...formData, hourlyRate: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, hourlyRate: e.target.value })
+          }
         />
 
         <input
           type="text"
           placeholder="Dirección"
           value={formData.address}
-          onChange={e => setFormData({ ...formData, address: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, address: e.target.value })
+          }
           required
         />
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Guardando...' : 'Publicar perfil'}
+          {loading ? "Guardando..." : "Publicar perfil"}
         </button>
       </form>
     </div>

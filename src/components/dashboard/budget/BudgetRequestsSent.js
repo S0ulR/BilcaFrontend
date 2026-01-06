@@ -1,20 +1,20 @@
 // src/components/dashboard/BudgetRequestsSent.js
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../../services/api";
-import { ToastContext } from "../../context/ToastContext";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
-import Breadcrumb from "../ui/Breadcrumb";
-import RequestCard from "../ui/RequestCard";
-import Modal from "../ui/Modal";
-import DataTable from "../ui/DataTable"; // Importamos el componente DataTable
-import useIsMobile from "../../hooks/useIsMobile";
-import { generateBudgetPDF } from "../../utils/generateBudgetPDF";
+import API from "../../../services/api";
+import { ToastContext } from "../../../context/ToastContext";
+import { useAuth } from "../../../context/AuthProvider";
+import Breadcrumb from "../../ui/Breadcrumb";
+import RequestCard from "../../ui/RequestCard";
+import Modal from "../../ui/Modal";
+import DataTable from "../../ui/DataTable";
+import useIsMobile from "../../../hooks/useIsMobile";
+import { generateBudgetPDF } from "../../../utils/generateBudgetPDF";
 import "./BudgetRequestsSent.css";
 
 const BudgetRequestsSent = () => {
   const { showError, success } = useContext(ToastContext);
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [responseModal, setResponseModal] = useState(null);
@@ -58,10 +58,10 @@ const BudgetRequestsSent = () => {
       setLoading(true);
       try {
         const res = await API.get("/budget-requests/sent");
-        // ✅ Filtrar solicitudes: solo mostrar las que NO están "respondido"
+        // Filtrar: solo respondidas
         const filteredRequests = (
           Array.isArray(res.data) ? res.data : []
-        ).filter((req) => req.status !== "respondido");
+        ).filter((req) => req.status === "respondido");
         setRequests(filteredRequests);
       } catch (err) {
         console.error("Error al cargar solicitudes enviadas:", err);
@@ -75,7 +75,6 @@ const BudgetRequestsSent = () => {
     fetchRequests();
   }, [showError]);
 
-  // --- MODIFICADO: handleAcceptBudget ahora elimina la solicitud localmente ---
   const handleAcceptBudget = (req) => {
     const profession = req.profession || req.worker.profession || "Servicio";
 
@@ -89,19 +88,17 @@ const BudgetRequestsSent = () => {
         description: req.description || "",
         budget: req.response.budget,
         estimatedTime: req.response.estimatedTime,
-        startDate: req.response.startDate, // ✅ Nuevo: Fecha de inicio
-        endDate: req.response.endDate, // ✅ Nuevo: Fecha de finalización
-        hourlyRate: req.response.hourlyRate, // ✅ Nuevo: Tarifa por hora
+        startDate: req.response.startDate,
+        endDate: req.response.endDate,
+        hourlyRate: req.response.hourlyRate,
       },
     });
 
-    // Eliminar la solicitud de presupuesto de la lista local
-    // para que no aparezca más en esta vista
     setRequests((prevRequests) =>
       prevRequests.filter((r) => r._id !== req._id)
     );
 
-    // Opcional: Eliminar del sessionStorage si se usó allí
+    // Eliminar del sessionStorage si se usó allí
     setGeneratedPDFs((prev) => {
       const updated = new Set(prev);
       updated.delete(req._id);
@@ -116,15 +113,13 @@ const BudgetRequestsSent = () => {
       return updated;
     });
   };
-  // --- FIN MODIFICACIÓN ---
 
-  // --- NUEVO: handleViewResponse para abrir el modal ---
+  // handleViewResponse para abrir el modal
   const handleViewResponse = (req) => {
     if (req.response) {
       setResponseModal(req);
     }
   };
-  // --- FIN NUEVO ---
 
   const handleOpenChatModal = (req) => {
     setChatModal(req);
@@ -190,7 +185,7 @@ const BudgetRequestsSent = () => {
         message:
           "Ya descargaste este presupuesto. ¿Deseas volver a descargarlo?",
         showDownloadButton: true,
-        request: req, // Guardamos la solicitud para poder generar el PDF nuevamente
+        request: req,
       });
       return;
     }
@@ -231,7 +226,6 @@ const BudgetRequestsSent = () => {
     }
   };
 
-  // Definir columnas para DataTable (adaptadas al estilo de BudgetRequestsReceived)
   const tableColumns = [
     {
       key: "worker",
@@ -263,7 +257,6 @@ const BudgetRequestsSent = () => {
       render: (row) => (
         <div className="desc" title={row.description}>
           {" "}
-          {/* Usamos la clase .desc del otro archivo */}
           {row.description.length > 80
             ? `${row.description.substring(0, 80)}...`
             : row.description}
@@ -298,7 +291,6 @@ const BudgetRequestsSent = () => {
       accessor: "status",
       sortable: true,
       render: (row) => {
-        // Verificar que el estado exista y sea válido
         const status = row.status || "pendiente";
         let displayText = "Pendiente";
 
@@ -313,27 +305,23 @@ const BudgetRequestsSent = () => {
     },
   ];
 
-  // Definir acciones para DataTable (adaptadas al estilo de BudgetRequestsReceived)
-  // --- MODIFICADO: Eliminada la acción "delete" ---
   const tableActions = [
     {
       key: "view",
-      label: "Ver respuesta", // Etiqueta para el tooltip si se usa
+      label: "Ver respuesta",
       icon: "fas fa-eye",
-      className: "btn-view", // Clase consistente
+      className: "btn-view",
       onClick: handleViewResponse,
     },
     {
       key: "pdf",
-      label: "Descargar PDF", // Etiqueta genérica
+      label: "Descargar PDF",
       icon: (row) =>
-        generatedPDFs.has(row._id) ? "fas fa-file-alt" : "fas fa-file-pdf", // Intento de dinamismo
-      className: (row) => (generatedPDFs.has(row._id) ? "btn-view" : "btn-pdf"), // Intento de dinamismo
+        generatedPDFs.has(row._id) ? "fas fa-file-alt" : "fas fa-file-pdf",
+      className: (row) => (generatedPDFs.has(row._id) ? "btn-view" : "btn-pdf"),
       onClick: (req) => handleGeneratePDF(req),
     },
-    // No hay acción de eliminar
   ];
-  // --- FIN MODIFICACIÓN ---
 
   if (loading) {
     return (
@@ -358,7 +346,6 @@ const BudgetRequestsSent = () => {
   }
 
   if (isMobile) {
-    // Vista móvil: usar cards como antes, pero adaptadas
     return (
       <div className="budget-requests-page sent">
         <Breadcrumb
@@ -373,7 +360,6 @@ const BudgetRequestsSent = () => {
           Mis Solicitudes de Presupuesto
         </h2>
 
-        {/* Barra de búsqueda para móvil */}
         <div className="search-bar-container">
           <div className="search-bar">
             <i className="fas fa-search search-icon"></i>
@@ -402,9 +388,8 @@ const BudgetRequestsSent = () => {
               key={req._id}
               request={req}
               onViewResponse={handleViewResponse}
-              // onDelete={handleDelete}, // Eliminado
-              onGeneratePDF={() => handleGeneratePDF(req)} // Añadido
-              hasGeneratedPDF={generatedPDFs.has(req._id)} // Añadido
+              onGeneratePDF={() => handleGeneratePDF(req)}
+              hasGeneratedPDF={generatedPDFs.has(req._id)}
             />
           ))}
         </div>
@@ -541,7 +526,7 @@ const BudgetRequestsSent = () => {
         enableSearch={true}
         searchPlaceholder="Buscar por trabajador, servicio, estado..."
         emptyStateText="No has enviado solicitudes"
-        className="budget-requests-table" // Clase adicional si es necesaria
+        className="budget-requests-table"
       />
 
       {/* Modales */}

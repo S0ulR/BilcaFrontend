@@ -1,0 +1,33 @@
+.action-btn.btn-view {
+  background-color: transparent !important;
+  border: #007bf7 1px solid !important;
+}
+.action-btn.btn-pdf {
+  background-color: transparent !important;
+}
+.btn-reject {
+  background-color: transparent !important;
+  color: #c82333 !important;
+  border: #c82333 1px solid !important;
+}
+
+.view-request-details {
+  padding: 0 1rem 1rem 1rem;
+}
+
+.request-section {
+  margin-bottom: 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.request-section h4 {
+  margin: 0 0 0.8rem 0;
+  color: #007bf7;
+  font-size: 1.1rem;
+}
+
+.request-section p {
+  margin: 0.3rem 0;
+  color: #555;
+}

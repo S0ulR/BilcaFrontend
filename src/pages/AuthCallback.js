@@ -1,7 +1,7 @@
 // src/pages/AuthCallback.js
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthProvider';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthProvider";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -9,20 +9,21 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const userStr = urlParams.get('user');
+    const token = urlParams.get("token");
+    const userStr = urlParams.get("user");
+    const sessionId = urlParams.get("sessionId"); // ✅ Nuevo
 
-    if (token && userStr) {
+    if (token && userStr && sessionId) {
       try {
         const user = JSON.parse(decodeURIComponent(userStr));
-        login(user, token);
-        navigate('/dashboard', { replace: true });
+        login(user, token, sessionId); // ✅ Incluir sessionId
+        navigate("/dashboard", { replace: true });
       } catch (e) {
-        console.error('Error al parsear usuario:', e);
-        navigate('/login');
+        console.error("Error al parsear usuario:", e);
+        navigate("/login");
       }
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   }, [navigate, login]);
 

@@ -1,35 +1,34 @@
 // src/components/dashboard/BudgetForm.js
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { generateBudgetPDF } from "../../utils/generateBudgetPDF";
-import { ToastContext } from "../../context/ToastContext";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
-import API from "../../services/api";
-import Breadcrumb from "../ui/Breadcrumb";
+import { generateBudgetPDF } from "../../../utils/generateBudgetPDF";
+import { ToastContext } from "../../../context/ToastContext";
+import { useAuth } from "../../../context/AuthProvider";
+import API from "../../../services/api";
+import Breadcrumb from "../../ui/Breadcrumb";
 import "./BudgetForm.css";
 
 const BudgetForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { success, error } = useContext(ToastContext);
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
 
-  // ✅ Estado inicial: clientEmail ahora se inicializa desde location.state
   const [formData, setFormData] = useState({
     clientName: "",
-    clientEmail: "", // Inicialmente vacío, se llenará con useEffect
+    clientEmail: "",
     service: "",
     description: "",
     hourlyRate: "",
-    hours: "",
+    estimatedTime: "",
+    totalBudget: "",
     validUntil: "",
   });
 
   const [showPreview, setShowPreview] = useState(false);
-  const [loading, setLoading] = useState(false); // Para el botón de envío por email
-  const [sendingMessage, setSendingMessage] = useState(false); // Para el botón de mensaje
+  const [loading, setLoading] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
-  // ✅ Cargar datos desde location.state si existen
   useEffect(() => {
     if (location.state) {
       const { clientName, clientEmail, service, description } = location.state;
@@ -37,7 +36,7 @@ const BudgetForm = () => {
       setFormData((prev) => ({
         ...prev,
         clientName: clientName || prev.clientName,
-        clientEmail: clientEmail || prev.clientEmail, // ✅ Se carga el email aquí
+        clientEmail: clientEmail || prev.clientEmail,
         service: service || prev.service,
         description: description || prev.description,
       }));
@@ -49,14 +48,23 @@ const BudgetForm = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const calculateTotals = () => {
-    const totalAmount =
-      formData.hourlyRate && formData.hours
-        ? (
-            parseFloat(formData.hourlyRate) * parseFloat(formData.hours)
-          ).toFixed(2)
-        : "0.00";
-    return { totalAmount };
+  // Nueva función de cálculo flexible
+  const calculateTotalAmount = () => {
+    const hasHourlyRate =
+      formData.hourlyRate && !isNaN(parseFloat(formData.hourlyRate));
+    const hasTotalBudget =
+      formData.totalBudget && !isNaN(parseFloat(formData.totalBudget));
+
+    if (hasTotalBudget) {
+      // Si el usuario especificó un presupuesto total, úsalo
+      return parseFloat(formData.totalBudget).toFixed(2);
+    } else if (hasHourlyRate) {
+      // Si no hay total, pero hay tarifa por hora, calcula
+      return parseFloat(formData.hourlyRate).toFixed(2);
+    } else {
+      // Si no hay ninguno, devuelve "A coordinar"
+      return "A coordinar";
+    }
   };
 
   const handlePreview = () => {
@@ -66,25 +74,27 @@ const BudgetForm = () => {
         "Completa todos los campos obligatorios."
       );
     }
-    const totalAmount = parseFloat(calculateTotals().totalAmount);
-    if (isNaN(totalAmount) || totalAmount <= 0) {
-      return error(
-        "Monto inválido",
-        "El monto total debe ser un número positivo."
-      );
+
+    // Validación flexible: al menos uno debe estar presente o ambos pueden estar vacíos
+    const hasHourlyRate =
+      formData.hourlyRate && !isNaN(parseFloat(formData.hourlyRate));
+    const hasTotalBudget =
+      formData.totalBudget && !isNaN(parseFloat(formData.totalBudget));
+
+    if (!hasHourlyRate && !hasTotalBudget) {
+      if (
+        !window.confirm("No has especificado ningún monto. ¿Deseas continuar?")
+      ) {
+        return;
+      }
+      console.log("Presupuesto sin monto específico");
     }
+
     setShowPreview(true);
   };
 
   const handleSubmit = () => {
-    const { totalAmount } = calculateTotals();
-    const numTotalAmount = parseFloat(totalAmount);
-    if (isNaN(numTotalAmount) || numTotalAmount <= 0) {
-      return error(
-        "Monto inválido",
-        "El monto total debe ser un número positivo."
-      );
-    }
+    const totalAmount = calculateTotalAmount();
 
     const data = {
       date: new Date().toLocaleDateString("es-AR"),
@@ -97,12 +107,14 @@ const BudgetForm = () => {
       service: formData.service,
       description: formData.description,
       hourlyRate: formData.hourlyRate || "N/A",
+      totalBudget: formData.totalBudget || "N/A",
+      estimatedTime: formData.estimatedTime || "A coordinar",
       totalAmount,
       items: [
         {
-          description: formData.service,
-          quantity: formData.hours || 1,
-          rate: formData.hourlyRate || 0,
+          description: formData.description,
+          quantity: formData.estimatedTime || "1",
+          rate: formData.hourlyRate || "A coordinar",
           amount: totalAmount,
         },
       ],
@@ -117,24 +129,22 @@ const BudgetForm = () => {
     }
   };
 
-  // ✅ Corrección del envío por correo con PDF adjunto
   const handleSendByEmail = async () => {
+    if (!location.state?.requestId) {
+      return error(
+        "Error",
+        "No se puede enviar el presupuesto: falta el ID de la solicitud."
+      );
+    }
     if (!formData.clientEmail) {
       return error("Falta email", "Agrega el email del cliente para enviarlo.");
     }
 
-    const { totalAmount } = calculateTotals();
-    if (!totalAmount || parseFloat(totalAmount) <= 0) {
-      return error(
-        "Datos incompletos",
-        "Ingresa tarifa y horas para calcular un total válido."
-      );
-    }
+    const totalAmount = calculateTotalAmount();
 
     setLoading(true);
 
     try {
-      // 1️⃣ Datos del presupuesto
       const data = {
         date: new Date().toLocaleDateString("es-AR"),
         validUntil: new Date(formData.validUntil).toLocaleDateString("es-AR"),
@@ -146,18 +156,30 @@ const BudgetForm = () => {
         service: formData.service,
         description: formData.description,
         hourlyRate: formData.hourlyRate || "N/A",
+        totalBudget: formData.totalBudget || "N/A",
+        estimatedTime: formData.estimatedTime || "A coordinar",
         totalAmount,
         items: [
           {
-            description: formData.service,
-            quantity: formData.hours || 1,
-            rate: formData.hourlyRate || 0,
+            description: formData.description,
+            quantity: formData.estimatedTime || "1",
+            rate: formData.hourlyRate || "A coordinar",
             amount: totalAmount,
           },
         ],
       };
 
-      // 2️⃣ Generar PDF con jsPDF + autoTable
+      const responsePayload = {
+        message: `Presupuesto enviado para "${formData.service}"`,
+        budget: totalAmount === "A coordinar" ? 0 : parseFloat(totalAmount),
+        estimatedTime: formData.estimatedTime || "A coordinar",
+      };
+
+      await API.post(
+        `/budget-requests/respond/${location.state.requestId}`,
+        responsePayload
+      );
+
       const { jsPDF } = await import("jspdf");
       await import("jspdf-autotable");
 
@@ -193,15 +215,25 @@ const BudgetForm = () => {
       doc.setFontSize(14);
       doc.text("Detalle del Presupuesto", 14, finalY2 + 10);
 
+      const itemsBody = [
+        [
+          data.service,
+          data.estimatedTime,
+          data.hourlyRate === "N/A"
+            ? data.totalBudget === "N/A"
+              ? "A coordinar"
+              : `$${data.totalBudget}`
+            : `$${data.hourlyRate}`,
+          data.totalAmount === "A coordinar"
+            ? data.totalAmount
+            : `$${data.totalAmount}`,
+        ],
+      ];
+
       doc.autoTable({
         startY: finalY2 + 15,
-        head: [["Descripción", "Cant.", "Precio Unit.", "Total"]],
-        body: data.items.map((item) => [
-          item.description,
-          item.quantity,
-          `$${parseFloat(item.rate).toFixed(2)}`,
-          `$${parseFloat(item.amount).toFixed(2)}`,
-        ]),
+        head: [["Descripción", "Tiempo estimado", "Precio", "Total"]],
+        body: itemsBody,
         theme: "striped",
         styles: { fontSize: 10 },
       });
@@ -209,7 +241,9 @@ const BudgetForm = () => {
       const finalY3 = doc.lastAutoTable.finalY;
       doc.setFontSize(12);
       doc.text(
-        `Total estimado: $${parseFloat(data.totalAmount).toFixed(2)}`,
+        data.totalAmount === "A coordinar"
+          ? "Total estimado: A coordinar"
+          : `Total estimado: $${data.totalAmount}`,
         14,
         finalY3 + 10
       );
@@ -229,11 +263,9 @@ const BudgetForm = () => {
         finalY3 + 40
       );
 
-      // 3️⃣ Convertir PDF a Blob correctamente
       const pdfArrayBuffer = doc.output("arraybuffer");
       const pdfBlob = new Blob([pdfArrayBuffer], { type: "application/pdf" });
 
-      // 4️⃣ Enviar al backend
       const fileName = `presupuesto_${data.client.name}_${
         data.service
       }_${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -243,7 +275,15 @@ const BudgetForm = () => {
       formDataToSend.append("subject", `Presupuesto para ${data.service}`);
       formDataToSend.append(
         "html",
-        `<p>Hola ${data.client.name},</p><p>Adjunto encontrarás el presupuesto solicitado por <strong>${data.service}</strong>.</p><p><strong>Total estimado: $${data.totalAmount}</strong></p>`
+        `<p>Hola ${
+          data.client.name
+        },</p><p>Adjunto encontrarás el presupuesto solicitado por <strong>${
+          data.service
+        }</strong>.</p><p><strong>Total estimado: ${
+          data.totalAmount === "A coordinar"
+            ? data.totalAmount
+            : `$${data.totalAmount}`
+        }</strong></p>`
       );
       formDataToSend.append("attachment", pdfBlob, fileName);
 
@@ -252,6 +292,7 @@ const BudgetForm = () => {
       });
 
       success("Enviado", `Presupuesto enviado a ${data.client.email}`);
+      navigate("/dashboard/budget-requests/sent");
     } catch (err) {
       console.error("Error al enviar presupuesto por email:", err);
       error("Error", "No se pudo enviar el presupuesto por email.");
@@ -261,8 +302,13 @@ const BudgetForm = () => {
     }
   };
 
-  // ✅ Nueva función para enviar por mensaje interno
   const handleSendMessage = async () => {
+    if (!location.state?.requestId) {
+      return error(
+        "Error",
+        "No se puede enviar el presupuesto: falta el ID de la solicitud."
+      );
+    }
     if (!formData.clientEmail) {
       return error(
         "Falta destinatario",
@@ -270,20 +316,22 @@ const BudgetForm = () => {
       );
     }
 
-    const { totalAmount } = calculateTotals();
-    if (!totalAmount || parseFloat(totalAmount) <= 0) {
-      return error(
-        "Datos incompletos",
-        "Ingresa tarifa y horas para calcular un total válido."
-      );
-    }
+    const totalAmount = calculateTotalAmount();
 
     setSendingMessage(true);
 
+    const responsePayload = {
+      message: `Presupuesto enviado para "${formData.service}"`,
+      budget: totalAmount === "A coordinar" ? 0 : parseFloat(totalAmount),
+      estimatedTime: formData.estimatedTime || "A coordinar",
+    };
+
+    await API.post(
+      `/budget-requests/respond/${location.state.requestId}`,
+      responsePayload
+    );
+
     try {
-      // Enviar mensaje con el resumen del presupuesto
-      // Asumiendo que tienes un endpoint como /messages/send
-      // y que location.state.clientId es el ID del cliente
       const recipientId = location.state?.clientId;
 
       if (!recipientId) {
@@ -291,16 +339,23 @@ const BudgetForm = () => {
       }
 
       await API.post("/messages/send", {
-        recipient: recipientId, // El ID del cliente al que se envía
-        content: `Hola, te envío un presupuesto para "${formData.service}" por un total estimado de $${totalAmount}.`,
+        recipient: recipientId,
+        content: `Hola, te envío un presupuesto para "${formData.service}"${
+          totalAmount !== "A coordinar"
+            ? ` por un total estimado de $${totalAmount}`
+            : ""
+        }. ${
+          formData.estimatedTime
+            ? `Tiempo estimado: ${formData.estimatedTime}.`
+            : ""
+        }`,
       });
 
       success(
         "Mensaje enviado",
         `Presupuesto enviado a ${formData.clientName} por mensaje interno.`
       );
-      // Opcional: también crear una entrada en budget-requests con estado "enviado_por_mensaje"
-      // await API.post("/budget-requests/log", { requestId: location.state?.requestId, method: "mensaje", amount: totalAmount });
+      navigate("/dashboard/budget-requests/sent");
     } catch (err) {
       console.error("Error al enviar mensaje:", err);
       error(
@@ -310,19 +365,18 @@ const BudgetForm = () => {
       );
     } finally {
       setSendingMessage(false);
-      setShowPreview(false); // Cerrar vista previa después de enviar
+      setShowPreview(false);
     }
   };
 
-  // ✅ Vista previa actualizada
   const renderPreview = () => {
-    const { totalAmount } = calculateTotals();
+    const totalAmount = calculateTotalAmount();
     return (
       <div className="budget-preview">
         <h3>Vista previa del presupuesto</h3>
         <div className="preview-content">
           <div className="preview-header">
-            <h4>Presupuesto para: {formData.service}</h4>
+            <h4>Presupuesto de: {formData.service}</h4>
             <p>Válido hasta: {formData.validUntil}</p>
           </div>
           <div className="preview-client">
@@ -331,8 +385,7 @@ const BudgetForm = () => {
             </p>
             <p>
               <strong>Email:</strong> {formData.clientEmail}
-            </p>{" "}
-            {/* ✅ Ahora debería mostrar el email */}
+            </p>
           </div>
           <div className="preview-worker">
             <p>
@@ -342,7 +395,7 @@ const BudgetForm = () => {
           {formData.description && (
             <div className="preview-description">
               <p>
-                <strong>Descripción:</strong> {formData.description}
+                <strong>Servicio de:</strong> {formData.service}
               </p>
             </div>
           )}
@@ -350,23 +403,34 @@ const BudgetForm = () => {
             <thead>
               <tr>
                 <th>Descripción</th>
-                <th>Cant.</th>
-                <th>Precio Unit.</th>
+                <th>Tiempo estimado</th>
+                <th>Precio</th>
                 <th>Total</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>{formData.service}</td>
-                <td>{formData.hours || 1}</td>
-                <td>${formData.hourlyRate || 0}</td>
-                <td>${totalAmount}</td>
+                <td>{formData.description}</td>
+                <td>{formData.estimatedTime || "A coordinar"}</td>
+                <td>
+                  {formData.hourlyRate
+                    ? `$${formData.hourlyRate}/hora`
+                    : formData.totalBudget
+                    ? `$${formData.totalBudget} total`
+                    : "A coordinar"}
+                </td>
+                <td>
+                  {totalAmount === "A coordinar"
+                    ? totalAmount
+                    : `$${totalAmount}`}
+                </td>
               </tr>
             </tbody>
           </table>
           <div className="preview-totals">
             <p>
-              <strong>Total estimado:</strong> ${totalAmount}
+              <strong>Total estimado:</strong>{" "}
+              {totalAmount === "A coordinar" ? totalAmount : `$${totalAmount}`}
             </p>
           </div>
         </div>
@@ -391,7 +455,6 @@ const BudgetForm = () => {
               </>
             )}
           </button>
-          {/* ✅ Nuevo botón para enviar por mensaje interno */}
           <button
             type="button"
             onClick={handleSendMessage}
@@ -474,7 +537,7 @@ const BudgetForm = () => {
               name="clientEmail"
               type="email"
               placeholder="Ej: maria@email.com"
-              value={formData.clientEmail} // ✅ Ahora debería estar poblado si vino del location.state
+              value={formData.clientEmail}
               onChange={handleChange}
               required
             />
@@ -506,9 +569,10 @@ const BudgetForm = () => {
           </div>
         </div>
 
+        {/* ✅ Nuevos campos flexibles */}
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="hourlyRate">Tarifa por hora ($)</label>
+            <label htmlFor="hourlyRate">Tarifa por hora ($) - Opcional</label>
             <input
               id="hourlyRate"
               name="hourlyRate"
@@ -521,15 +585,31 @@ const BudgetForm = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="hours">Horas estimadas</label>
+            <label htmlFor="totalBudget">
+              Presupuesto total ($) - Opcional
+            </label>
             <input
-              id="hours"
-              name="hours"
+              id="totalBudget"
+              name="totalBudget"
               type="number"
               min="0"
-              step="0.5"
-              placeholder="Ej: 4"
-              value={formData.hours}
+              step="0.01"
+              placeholder="Ej: 200.00"
+              value={formData.totalBudget}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="estimatedTime">Tiempo estimado - Opcional</label>
+            <input
+              id="estimatedTime"
+              name="estimatedTime"
+              type="text"
+              placeholder="Ej: 3 horas, 2 días, 1 semana"
+              value={formData.estimatedTime}
               onChange={handleChange}
             />
           </div>

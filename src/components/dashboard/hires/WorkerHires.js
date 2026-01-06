@@ -1,17 +1,17 @@
 // src/components/dashboard/WorkerHires.js
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthProvider"; // Nuevo
-import API from "../../services/api";
-import { ToastContext } from "../../context/ToastContext";
-import Breadcrumb from "../ui/Breadcrumb";
-import DataTable from "../ui/DataTable"; // Importamos el componente DataTable
-import useIsMobile from "../../hooks/useIsMobile";
+import { useAuth } from "../../../context/AuthProvider";
+import API from "../../../services/api";
+import { ToastContext } from "../../../context/ToastContext";
+import Breadcrumb from "../../ui/Breadcrumb";
+import DataTable from "../../ui/DataTable";
+import useIsMobile from "../../../hooks/useIsMobile";
 import "./WorkerHires.css";
 
 const WorkerHires = () => {
   const { success, error: showError } = useContext(ToastContext);
-  const { user } = useAuth(); // ✅ Nuevo: usar el contexto de autenticación
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -23,10 +23,13 @@ const WorkerHires = () => {
       setLoading(true);
       try {
         const res = await API.get("/hires");
-        const allHires = Array.isArray(res.data) ? res.data : res.data.hires || [];
+        const allHires = Array.isArray(res.data)
+          ? res.data
+          : res.data.hires || [];
 
         const workerHires = allHires.filter(
-          (h) => h.worker && h.worker._id && h.worker._id.trim() === user._id.trim()
+          (h) =>
+            h.worker && h.worker._id && h.worker._id.trim() === user._id.trim()
         );
 
         setHires(workerHires);
@@ -57,27 +60,48 @@ const WorkerHires = () => {
         )
       );
     } catch (err) {
-      showError("Error", err.response?.data?.msg || "No se pudo actualizar el estado");
+      showError(
+        "Error",
+        err.response?.data?.msg || "No se pudo actualizar el estado"
+      );
     }
   };
 
-  // --- ELIMINADA: handleDelete ---
-  /*
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar esta contratación?")) return;
+  // ✅ NUEVO: Trabajador marca como completado
+  const handleMarkAsCompleted = async (hireId) => {
+    if (
+      !window.confirm(
+        "¿Estás seguro de que deseas marcar este trabajo como completado?"
+      )
+    ) {
+      return;
+    }
 
     try {
-      await API.delete(`/hires/${id}`);
-      setHires((prev) => prev.filter((h) => h._id !== id));
-      success("Contratación eliminada correctamente");
+      const res = await API.put(`/hires/${hireId}/status/completed`);
+      const hire = res.data.hire;
+
+      success("Trabajo completado", "Has marcado el trabajo como completado.");
+
+      setHires((prev) =>
+        prev.map((h) =>
+          h._id === hireId
+            ? {
+                ...h,
+                workerCompleted: true,
+                status: hire.status,
+                completedAt: hire.completedAt,
+              }
+            : h
+        )
+      );
     } catch (err) {
-      const errorMsg =
-        err.response?.data?.msg || "No se pudo eliminar la contratación";
-      showError(errorMsg);
+      showError(
+        "Error",
+        err.response?.data?.msg || "No se pudo marcar como completado"
+      );
     }
   };
-  */
-  // --- FIN ELIMINACIÓN ---
 
   const getStatusLabel = (status) => {
     const labels = {
@@ -108,10 +132,6 @@ const WorkerHires = () => {
   }
 
   if (isMobile) {
-    // Vista móvil: Mostrar mensaje o cards personalizadas si es necesario
-    // Por ahora, se puede dejar un mensaje indicando que la funcionalidad está en la vista desktop
-    // o implementar una vista de tarjetas específica si se desea.
-    // Por simplicidad, dejaremos el mensaje.
     return (
       <div className="worker-hires-page">
         <Breadcrumb
@@ -127,13 +147,15 @@ const WorkerHires = () => {
         </h2>
         <div className="mobile-notice">
           <i className="fas fa-info-circle"></i>
-          <p>La gestión de contrataciones está disponible en la vista de escritorio.</p>
+          <p>
+            La gestión de contrataciones está disponible en la vista de
+            escritorio.
+          </p>
         </div>
       </div>
     );
   }
 
-  // Definir columnas para DataTable
   const tableColumns = [
     {
       key: "client",
@@ -150,13 +172,13 @@ const WorkerHires = () => {
           />
           <span className="client-name">{row.client.name}</span>
         </div>
-      )
+      ),
     },
     {
       key: "service",
       header: "Servicio",
       accessor: "service",
-      sortable: true
+      sortable: true,
     },
     {
       key: "description",
@@ -168,28 +190,38 @@ const WorkerHires = () => {
             ? `${row.description.substring(0, 80)}...`
             : row.description}
         </div>
-      )
+      ),
     },
     {
       key: "createdAt",
       header: "Solicitud",
       accessor: "createdAt",
       sortable: true,
-      render: (row) => (
+      render: (row) =>
         new Date(row.createdAt).toLocaleDateString("es-AR", {
           day: "2-digit",
           month: "short",
-        })
-      )
+        }),
+    },
+    {
+      key: "completedAt",
+      header: "Finalización",
+      accessor: "completedAt",
+      sortable: true,
+      render: (row) =>
+        row.completedAt
+          ? new Date(row.completedAt).toLocaleDateString("es-AR", {
+              day: "2-digit",
+              month: "short",
+            })
+          : "-",
     },
     {
       key: "budget",
       header: "Presupuesto",
       accessor: "budget",
       sortable: true,
-      render: (row) => (
-        `$${row.budget?.toFixed(2) || "No especificado"}`
-      )
+      render: (row) => `$${row.budget?.toFixed(2) || "No especificado"}`,
     },
     {
       key: "status",
@@ -200,37 +232,48 @@ const WorkerHires = () => {
         <span className={`status-badge ${row.status}`}>
           {getStatusLabel(row.status)}
         </span>
-      )
-    }
+      ),
+    },
   ];
 
-  // Definir acciones para DataTable
-  // --- MODIFICADO: Eliminada la acción "delete" ---
+  // ✅ ACTUALIZADO: Acciones según el estado del trabajo
   const tableActions = [
     {
       key: "accept",
       label: "Aceptar contratación",
       icon: "fas fa-check",
-      className: "btn-accept", // Clase para diferenciar
+      className: "btn-accept",
       onClick: (hire) => handleUpdateStatus(hire._id, "aceptado"),
-      visible: (row) => row.status === "pendiente" // Solo visible si está pendiente
+      visible: (row) => row.status === "pendiente",
     },
     {
       key: "reject",
       label: "Rechazar contratación",
       icon: "fas fa-times",
-      className: "btn-reject", // Clase para diferenciar
+      className: "btn-reject",
       onClick: (hire) => handleUpdateStatus(hire._id, "rechazado"),
-      visible: (row) => row.status === "pendiente" // Solo visible si está pendiente
+      visible: (row) => row.status === "pendiente",
     },
-    // No hay acción de eliminar
+    {
+      key: "complete",
+      label: "Marcar como completado",
+      icon: "fas fa-check-circle",
+      className: "btn-complete",
+      onClick: (hire) => handleMarkAsCompleted(hire._id),
+      visible: (row) => row.status === "aceptado" && !row.workerCompleted,
+    },
+    {
+      key: "view",
+      label: "Trabajo completado",
+      icon: "fas fa-check",
+      className: "btn-completed",
+      onClick: (hire) => {}, // No acción para completado
+      visible: (row) => row.status === "completado",
+    },
   ];
-  // --- FIN MODIFICACIÓN ---
 
-  // Vista desktop: usar DataTable
   return (
     <div className="worker-hires-page">
-      {/* Breadcrumb */}
       <Breadcrumb
         items={[
           { label: "Inicio", path: "/dashboard" },
@@ -238,19 +281,17 @@ const WorkerHires = () => {
           { label: "Como Trabajador", active: true },
         ]}
       />
-      {/* Título */}
       <h2 className="page-title">
         <i className="fas fa-briefcase"></i>
         Mis Contrataciones como Trabajador
       </h2>
-      {/* DataTable */}
       <DataTable
         data={hires}
         columns={tableColumns}
         actions={tableActions}
         initialSort={{ key: "createdAt", direction: "desc" }}
-        itemsPerPage={5} // Mantenemos el mismo número de elementos por página
-        enableSearch={true} // Habilitar búsqueda si es necesario
+        itemsPerPage={5}
+        enableSearch={true}
         searchPlaceholder="Buscar por cliente, servicio, estado..."
         emptyStateText="No has sido contratado aún. Espera solicitudes o promociona tus servicios."
         className="worker-hires-table"

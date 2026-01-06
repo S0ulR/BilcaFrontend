@@ -1,9 +1,9 @@
-/* pages/WorkerProfilePage.css */
+/* src/pages/WorkerProfilePage.css */
 .worker-profile-page {
   max-width: 900px;
   margin: 1.5rem auto;
   padding: 0 1rem;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
 }
 
 /* Reusar welcome-card */
@@ -94,8 +94,7 @@
 }
 
 .btn-contact,
-.btn-budget,
-.btn-hire {
+.btn-budget {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,17 +129,6 @@
   background: #138496;
   transform: translateY(-1px);
   box-shadow: 0 6px 12px rgba(23, 162, 184, 0.2);
-}
-
-.btn-hire {
-  background: #28a745;
-  color: white;
-}
-
-.btn-hire:hover:not(:disabled) {
-  background: #218838;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(40, 167, 69, 0.2);
 }
 
 /* Contenido */
@@ -258,27 +246,111 @@
   color: #2c3e50;
 }
 
-/* Autocompletado - Sugerencias */
+/* Contenedor general */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+/* Wrapper SOLO para input + dropdown  */
+.location-autocomplete {
+  position: relative;
+  width: 100%;
+}
+
+.location-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+/* cuando está abierto, “pega” el dropdown visualmente */
+.location-input.open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Dropdown PEGADO al input */
 .suggestions-list {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
   background: white;
-  border: 1px solid #ddd;
+  border: 2px solid #e9ecef;
   border-top: none;
-  max-height: 200px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  max-height: 220px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 2000;
   margin: 0;
   padding: 0;
   list-style: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-size: 0.9rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
-.suggestions-list li:hover {
+/* item */
+.suggestion-item {
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f5;
+  background: white;
+  transition: background-color 0.2s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
   background: #f8f9fa;
+}
+
+/* texto corto y limpio */
+.suggestion-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-subtitle {
+  margin-top: 0.15rem;
+  font-size: 0.82rem;
+  color: #6c757d;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Small helper text */
+.form-group small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.country-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  background: white;
+}
+
+.country-select:focus {
+  outline: none;
+  border-color: #4a9d9c;
+  box-shadow: 0 0 0 3px rgba(74, 157, 156, 0.2);
 }
 
 /* ==================== RESPONSIVE ==================== */
@@ -309,7 +381,6 @@
     justify-content: center;
   }
 
-  /* ✅ Botones ocupan TODO el ancho del contenedor */
   .profile-actions {
     flex-direction: column;
     margin-left: 0;
@@ -326,34 +397,7 @@
     font-size: 1rem;
     padding: 0.8rem 1rem;
     min-width: auto;
-    box-sizing: border-box; /* Asegura que padding no afecte el 100% */
-  }
-}
-
-@media (max-width: 480px) {
-  .worker-profile-page {
-    margin: 1rem auto;
-  }
-
-  .profile-header {
-    padding: 1.2rem;
-    gap: 1rem;
-  }
-
-  .profile-photo-large {
-    width: 90px;
-    height: 90px;
-  }
-
-  .profile-info h1 {
-    font-size: 1.4rem;
-  }
-
-  .btn-contact,
-  .btn-budget,
-  .btn-hire {
-    font-size: 0.95rem;
-    padding: 0.75rem 1rem;
+    box-sizing: border-box;
   }
 }
 

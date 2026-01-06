@@ -1,52 +1,70 @@
 // src/components/layout/DashboardLayout.js
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthProvider";
 
 // Componentes
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Sidebar from "../dashboard/Sidebar";
 
-// Páginas
+// Páginas — ✅ Organizadas por funcionalidad
 import DashboardHome from "../dashboard/DashboardHome";
 import SearchWorker from "../dashboard/SearchWorker";
 import HiresDashboardPage from "../dashboard/HiresDashboardPage";
-import WorkerHires from "../dashboard/WorkerHires";
-import MyHires from "../dashboard/MyHires";
+
+// Contrataciones
+import WorkerHires from "../dashboard/hires/WorkerHires";
+import MyHires from "../dashboard/hires/MyHires";
+
+// Presupuestos
+import BudgetRequestsReceived from "../dashboard/budget/BudgetRequestsReceived";
+import BudgetRequestsSent from "../dashboard/budget/BudgetRequestsSent";
+import BudgetSent from "../dashboard/budget/BudgetSent"; // ✅ Mover a budget/
+import BudgetForm from "../dashboard/budget/BudgetForm";
+
+// Documentos
+import Documents from "../dashboard/Documents";
+import ContractForm from "../dashboard/documents/ContractForm";
+import InvoiceForm from "../dashboard/documents/InvoiceForm";
+
+// Otros
 import Messages from "../dashboard/Messages";
 import OfferService from "../dashboard/OfferService";
-import Documents from "../dashboard/Documents";
-import BudgetForm from "../dashboard/BudgetForm";
-import ContractForm from "../dashboard/ContractForm";
-import InvoiceForm from "../dashboard/InvoiceForm";
 import WorkerDashboard from "../dashboard/WorkerDashboard";
 import AllReviewsPage from "../dashboard/AllReviewsPage";
 import AllNotificationsPage from "../dashboard/AllNotificationsPage";
 import ProfilePage from "../dashboard/ProfileForm";
 import SettingsPage from "../dashboard/SettingsPage";
-import BudgetRequestsReceived from "../dashboard/BudgetRequestsReceived";
-import BudgetRequestsSent from "../dashboard/BudgetRequestsSent";
+
+// Admin y suscripción
+import AdminDashboard from "../admin/AdminDashboard";
+import SubscriptionPlans from "../subscription/SubscriptionPlans";
+import SubscriptionSuccess from "../subscription/SubscriptionSuccess";
+
+// Componente de protección por rol
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { user } = useAuth();
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+};
 
 const DashboardLayout = ({ user, onLogout }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true); 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const openMobileMenu = () => {
     setMobileMenuOpen(true);
-    // Bloquear scroll del body
     document.body.style.overflow = "hidden";
   };
-
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
     document.body.style.overflow = "";
   };
 
-  // Cleanup al desmontar
   useEffect(() => {
     return () => {
       document.body.style.overflow = "";
@@ -55,27 +73,12 @@ const DashboardLayout = ({ user, onLogout }) => {
 
   return (
     <div className="dashboard-layout">
-      <Navbar
-        user={user}
-        onLogout={onLogout}
-        toggleSidebar={openMobileMenu}
-      />
-
+      <Navbar user={user} onLogout={onLogout} toggleSidebar={openMobileMenu} />
       <div className="dashboard-body">
-        {/* Sidebar */}
         <aside
           className={`sidebar ${sidebarOpen ? "expanded" : "collapsed"} ${
             mobileMenuOpen ? "mobile-open" : ""
           }`}
-          onMouseEnter={() => {
-            if (window.innerWidth >= 768) {
-              setSidebarOpen(true);
-            }
-          }}
-          onMouseLeave={() => {
-            if (window.innerWidth >= 768 && !sidebarOpen) {
-            }
-          }}
         >
           <Sidebar
             user={user}
@@ -85,7 +88,6 @@ const DashboardLayout = ({ user, onLogout }) => {
           />
         </aside>
 
-        {/* Overlay en móvil */}
         {mobileMenuOpen && (
           <div
             className="sidebar-overlay"
@@ -94,36 +96,117 @@ const DashboardLayout = ({ user, onLogout }) => {
           ></div>
         )}
 
-        {/* Contenido principal */}
-        <main className={`dashboard-main ${mobileMenuOpen ? "mobile-menu-open" : ""}`}>
+        <main
+          className={`dashboard-main ${
+            mobileMenuOpen ? "mobile-menu-open" : ""
+          }`}
+        >
           <div className="dashboard-content">
             <Routes>
               <Route index element={<DashboardHome user={user} />} />
               <Route path="search" element={<SearchWorker />} />
-              <Route path="hires/*" element={<HiresDashboardPage />} />
-              <Route path="hires/worker" element={<WorkerHires />} />
-              <Route path="hires/user" element={<MyHires />} />
-              <Route path="budget-requests/received" element={<BudgetRequestsReceived />} />
-              <Route path="budget-requests/sent" element={<BudgetRequestsSent />} />
-              <Route path="messages" element={<Messages />} />
-              <Route path="offer" element={<OfferService />} />
-              <Route path="reviews" element={<AllReviewsPage />} />
-              <Route path="documents" element={<Documents />} />
+
+              {/* Presupuestos */}
+              <Route
+                path="budget-requests/received"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <BudgetRequestsReceived />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="budget-requests/sent"
+                element={<BudgetRequestsSent />}
+              />
+              <Route
+                path="budget-sent"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <BudgetSent />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="documents/budget" element={<BudgetForm />} />
+
+              {/* Contrataciones */}
+              <Route path="hires/*" element={<HiresDashboardPage />} />
+              <Route
+                path="hires/worker"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <WorkerHires />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="hires/user"
+                element={
+                  <ProtectedRoute allowedRoles={["user", "worker"]}>
+                    <MyHires />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Documentos */}
+              <Route path="documents" element={<Documents />} />
               <Route path="documents/contract" element={<ContractForm />} />
               <Route path="documents/invoice" element={<InvoiceForm />} />
+
+              {/* Otros */}
+              <Route path="messages" element={<Messages />} />
+              <Route path="offer" element={<OfferService />} />
+              <Route
+                path="reviews"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <AllReviewsPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="notifications" element={<AllNotificationsPage />} />
               <Route path="profile" element={<ProfilePage user={user} />} />
               <Route path="settings" element={<SettingsPage user={user} />} />
-              {user?.role === "worker" && (
-                <Route path="worker" element={<WorkerDashboard />} />
-              )}
+              <Route
+                path="worker"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <WorkerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Suscripción y Admin */}
+              <Route
+                path="subscription"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <SubscriptionPlans />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="subscription/success"
+                element={
+                  <ProtectedRoute allowedRoles={["worker"]}>
+                    <SubscriptionSuccess />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin"
+                element={
+                  <ProtectedRoute allowedRoles={["superadmin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="*" element={<Navigate to="." replace />} />
             </Routes>
           </div>
         </main>
       </div>
-
       <Footer />
     </div>
   );

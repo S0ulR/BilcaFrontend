@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../services/api";
+import API, { setLogoutCallback } from "../services/api";
 
 const AuthContext = createContext();
 
@@ -22,10 +22,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [sessionId, setSessionId] = useState(null);
-  const inactivityTimeoutRef = useRef(null); // ✅ Usar useRef en lugar de useState
+  const inactivityTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
-  // Reiniciar temporizador de inactividad
   const resetInactivityTimer = () => {
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current);
@@ -35,10 +34,9 @@ export const AuthProvider = ({ children }) => {
         "Sesión cerrada por inactividad. Por seguridad, por favor vuelve a iniciar sesión."
       );
       handleLogout();
-    }, 24 * 60 * 60 * 1000); // 24 horas
+    }, 24 * 60 * 60 * 1000);
   };
 
-  // Escuchar eventos de inactividad
   useEffect(() => {
     const events = [
       "mousedown",
@@ -52,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     events.forEach((event) =>
       window.addEventListener(event, resetInactivityTimer)
     );
-    resetInactivityTimer(); // Iniciar el temporizador al cargar
+    resetInactivityTimer();
 
     return () => {
       events.forEach((event) =>
@@ -62,19 +60,29 @@ export const AuthProvider = ({ children }) => {
         clearTimeout(inactivityTimeoutRef.current);
       }
     };
-  }, []); // ✅ Dependencias vacías para que solo se ejecute al montar
+  }, []);
 
-  // Verificar sesión guardada - ✅ Se ejecuta SOLO una vez
   useEffect(() => {
+    setLogoutCallback(() => {
+      setUser(null);
+      setToken(null);
+      setSessionId(null);
+      navigate("/login", { replace: true });
+    });
+
     const checkSession = async () => {
       const token = sessionStorage.getItem("token");
       const userStr = sessionStorage.getItem("user");
       const sid = sessionStorage.getItem("sessionId");
 
+      // Solo validar si hay sesión
       if (token && userStr && sid) {
         try {
           const res = await API.get("/auth/validate-token", {
-            headers: { Authorization: `Bearer ${token}`, "x-session-id": sid },
+            headers: {
+              "x-auth-token": token,
+              "x-session-id": sid,
+            },
           });
 
           if (res.status === 401) throw new Error("Sesión inválida");
@@ -85,16 +93,19 @@ export const AuthProvider = ({ children }) => {
           setSessionId(sid);
         } catch (err) {
           console.error("Error al validar sesión:", err);
-          sessionStorage.removeItem("token");
-          sessionStorage.removeItem("user");
-          sessionStorage.removeItem("sessionId");
+          // Limpieza segura: solo si existe
+          if (sessionStorage.getItem("token")) {
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("user");
+            sessionStorage.removeItem("sessionId");
+          }
         }
       }
       setLoading(false);
     };
 
     checkSession();
-  }, []); // ✅ Dependencias vacías para que solo se ejecute al montar
+  }, []); // Solo se ejecuta una vez
 
   const login = (userData, token, sessionId) => {
     sessionStorage.setItem("token", token);
@@ -106,14 +117,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleLogout = () => {
-    // Hacer logout en backend
     if (token) {
       API.post(
         "/auth/logout",
         {},
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            "x-auth-token": token,
             "x-session-id": sessionId,
           },
         }
@@ -138,8 +148,35 @@ export const AuthProvider = ({ children }) => {
     handleLogout();
   };
 
+  const validateSession = async () => {
+    if (!token || !sessionId || !user) return false;
+
+    try {
+      const res = await API.get("/auth/validate-token", {
+        headers: {
+          "x-auth-token": token,
+          "x-session-id": sessionId,
+        },
+      });
+      return res.data.msg === "Token válido";
+    } catch (err) {
+      console.error("Sesión inválida:", err);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, sessionId }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        logout,
+        sessionId,
+        validateSession,
+      }}
+    >
       {!loading ? children : null}
     </AuthContext.Provider>
   );

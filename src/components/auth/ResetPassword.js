@@ -17,7 +17,6 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Validar token al montar el componente
   useEffect(() => {
     const validateToken = async () => {
       try {
@@ -67,10 +66,15 @@ const ResetPassword = () => {
 
     try {
       await API.post(`/auth/reset-password/${token}`, { password });
-      setSuccess("Contraseña actualizada correctamente. Serás redirigido al login...");
-      setTimeout(() => navigate("/login"), 2000);
+      setSuccess(
+        "Contraseña actualizada correctamente. Serás redirigido al login..."
+      );
+      setTimeout(() => navigate("/login", { replace: true }), 2000);
     } catch (err) {
-      setError(err.response?.data?.msg || "No se pudo restablecer la contraseña. Intenta de nuevo.");
+      setError(
+        err.response?.data?.msg ||
+          "No se pudo restablecer la contraseña. Intenta de nuevo."
+      );
     } finally {
       setLoading(false);
     }
@@ -123,10 +127,14 @@ const ResetPassword = () => {
                 required
               />
               <i
-                className={`fas ${showPassword ? "fa-eye" : "fa-eye-slash"} toggle-visibility`}
+                className={`fas ${
+                  showPassword ? "fa-eye" : "fa-eye-slash"
+                } toggle-visibility`}
                 onClick={() => setShowPassword(!showPassword)}
                 role="button"
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-label={
+                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
               ></i>
             </div>
           </div>
@@ -144,34 +152,57 @@ const ResetPassword = () => {
                 required
               />
               <i
-                className={`fas ${showConfirmPassword ? "fa-eye" : "fa-eye-slash"} toggle-visibility`}
+                className={`fas ${
+                  showConfirmPassword ? "fa-eye" : "fa-eye-slash"
+                } toggle-visibility`}
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 role="button"
-                aria-label={showConfirmPassword ? "Ocultar confirmación" : "Mostrar confirmación"}
+                aria-label={
+                  showConfirmPassword
+                    ? "Ocultar confirmación"
+                    : "Mostrar confirmación"
+                }
               ></i>
             </div>
           </div>
 
-          {/* Requisitos de contraseña */}
           <div className="password-requirements">
-            <p style={{ color: passwordRequirements.length ? "green" : "#999" }}>
+            <p
+              style={{ color: passwordRequirements.length ? "green" : "#999" }}
+            >
               • Mínimo 8 caracteres
             </p>
-            <p style={{ color: passwordRequirements.uppercase ? "green" : "#999" }}>
+            <p
+              style={{
+                color: passwordRequirements.uppercase ? "green" : "#999",
+              }}
+            >
               • Al menos una mayúscula
             </p>
-            <p style={{ color: passwordRequirements.number ? "green" : "#999" }}>
+            <p
+              style={{ color: passwordRequirements.number ? "green" : "#999" }}
+            >
               • Al menos un número
             </p>
-            <p style={{ color: passwordRequirements.special ? "green" : "#999" }}>
+            <p
+              style={{ color: passwordRequirements.special ? "green" : "#999" }}
+            >
               • Carácter especial (!@#$%...)
             </p>
-            <p style={{ color: passwordRequirements.notCommon ? "green" : "#999" }}>
+            <p
+              style={{
+                color: passwordRequirements.notCommon ? "green" : "#999",
+              }}
+            >
               • No usar contraseñas comunes
             </p>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary btn-block">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary btn-block"
+          >
             {loading ? (
               <>
                 <i className="fas fa-spinner fa-spin"></i> Actualizando...
