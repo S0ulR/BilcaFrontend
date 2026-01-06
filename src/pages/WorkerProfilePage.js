@@ -366,25 +366,46 @@ const WorkerProfilePage = () => {
         }
 
         try {
-          const response = await API.get(`/geocode/reverse`, {
+          const response = await API.get("/geocode/reverse", {
             params: { lat: latitude, lon: longitude },
           });
 
           const data = response.data || {};
           const addr = data.address || {};
 
+          const locality = addr.town || addr.city || addr.village || "";
+
+          const province = addr.state || "";
+          const country = addr.country || "Argentina";
+
+          const finalAddress =
+            data.display_name ||
+            [locality, province, country].filter(Boolean).join(", ");
+
+          if (!finalAddress) {
+            showError("Error", "No se pudo obtener tu dirección.");
+            setIsFetchingLocation(false);
+            return;
+          }
+
           setBudgetForm((prev) => ({
             ...prev,
-            address: data.display_name || prev.address || "",
-            locality:
-              addr.town || addr.city || addr.suburb || addr.village || "",
-            province: addr.state || "",
-            country: addr.country || prev.country || "Argentina",
+            address: finalAddress,
+            locality,
+            province,
+            country,
           }));
 
           clear();
 
-          success("Ubicación detectada", "Se usó tu ubicación actual.");
+          if (!province || !locality) {
+            showError(
+              "Ubicación parcial",
+              "Se detectó la ubicación, pero no se pudo completar provincia o localidad. Probá escribir tu ciudad."
+            );
+          } else {
+            success("Ubicación detectada", "Se usó tu ubicación actual.");
+          }
         } catch (err) {
           console.error("Error en reverse geocoding:", err);
           showError(
@@ -399,10 +420,7 @@ const WorkerProfilePage = () => {
         setIsFetchingLocation(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            showError(
-              "Permiso denegado",
-              "Por favor, permite el acceso a tu ubicación."
-            );
+            showError("Permiso denegado", "Permite el acceso a tu ubicación.");
             break;
           case error.POSITION_UNAVAILABLE:
             showError(
@@ -411,7 +429,7 @@ const WorkerProfilePage = () => {
             );
             break;
           case error.TIMEOUT:
-            showError("Tiempo agotado", "La solicitud de ubicación expiró.");
+            showError("Tiempo agotado", "La solicitud expiró.");
             break;
           default:
             showError("Error desconocido", "No se pudo obtener tu ubicación.");
