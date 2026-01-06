@@ -10,6 +10,7 @@ export const setLogoutCallback = (callback) => {
 const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
   withCredentials: false,
+  timeout: 8000,
 });
 
 API.interceptors.request.use(
@@ -37,15 +38,19 @@ API.interceptors.response.use(
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
       // ✅ Solo redirigir en rutas protegidas
-      const isProtectedRoute = !["/", "/login", "/register", "/workers", "/worker/"].some(path => 
-        currentPath.startsWith(path)
-      );
+      const isProtectedRoute = ![
+        "/",
+        "/login",
+        "/register",
+        "/workers",
+        "/worker/",
+      ].some((path) => currentPath.startsWith(path));
 
       if (isProtectedRoute) {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("sessionId");
-        
+
         if (logoutCallback) {
           logoutCallback();
         } else {

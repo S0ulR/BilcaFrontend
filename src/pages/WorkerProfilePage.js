@@ -324,16 +324,22 @@ const WorkerProfilePage = () => {
     }
 
     try {
+      // ⬅️ feedback inmediato
+      setBudgetModalOpen(false);
+      success("Enviando solicitud…", "Estamos procesando tu pedido");
+
       await API.post("/budget-requests/create", {
         worker: id,
         ...budgetForm,
       });
 
+      success("Solicitud enviada", "El trabajador recibirá tu solicitud");
+
       // Cerrar modal
       setBudgetModalOpen(false);
 
       // Marcar éxito (el toast se dispara en useEffect)
-      setBudgetSuccess(true);
+      // setBudgetSuccess(true);
 
       // Resetear formulario
       setBudgetForm({
