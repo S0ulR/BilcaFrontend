@@ -383,6 +383,7 @@ const WorkerProfilePage = () => {
           }));
 
           clear();
+
           success("Ubicación detectada", "Se usó tu ubicación actual.");
         } catch (err) {
           console.error("Error en reverse geocoding:", err);
