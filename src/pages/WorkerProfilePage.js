@@ -322,17 +322,15 @@ const WorkerProfilePage = () => {
       success("Solicitud enviada", "El trabajador recibirá tu solicitud");
       setBudgetModalOpen(false);
 
-      // Resetear formulario
       setBudgetForm({
-        profession:
-          worker.services?.length > 0 ? worker.services[0].profession : "",
+        profession: budgetForm.profession,
         startDate: "",
         description: "",
         address: "",
         locality: "",
         province: "",
-        country: "Argentina",
-        countryCode: "AR",
+        country: budgetForm.country, // o "Argentina"
+        countryCode: budgetForm.countryCode, // o "AR"
         urgent: "no",
       });
       clear();
