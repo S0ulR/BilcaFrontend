@@ -319,21 +319,28 @@ const WorkerProfilePage = () => {
         ...budgetForm,
       });
 
-      success("Solicitud enviada", "El trabajador recibirá tu solicitud");
+      // 1️⃣ Cerrar modal primero
       setBudgetModalOpen(false);
 
+      // 2️⃣ Resetear formulario
       setBudgetForm({
-        profession: budgetForm.profession,
+        profession:
+          worker.services?.length > 0 ? worker.services[0].profession : "",
         startDate: "",
         description: "",
         address: "",
         locality: "",
         province: "",
-        country: budgetForm.country, // o "Argentina"
-        countryCode: budgetForm.countryCode, // o "AR"
+        country: "Argentina",
+        countryCode: "AR",
         urgent: "no",
       });
       clear();
+
+      // 3️⃣ Mostrar toast en el próximo tick
+      setTimeout(() => {
+        success("Solicitud enviada", "El trabajador recibirá tu solicitud");
+      }, 100);
     } catch (err) {
       const errorMsg =
         err.response?.data?.msg || "No se pudo enviar la solicitud";
