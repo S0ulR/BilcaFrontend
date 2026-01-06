@@ -56,6 +56,8 @@ const WorkerProfilePage = () => {
     urgent: "no",
   });
 
+  const [budgetSuccess, setBudgetSuccess] = useState(false);
+
   const { suggestions, search, clear } = useGeocoder(
     budgetForm.countryCode || "AR"
   );
@@ -204,6 +206,14 @@ const WorkerProfilePage = () => {
     if (id) fetchWorker();
   }, [id]);
 
+  // Mostrar toast de éxito fuera del modal (Vercel-safe)
+  useEffect(() => {
+    if (budgetSuccess) {
+      success("Solicitud enviada", "El trabajador recibirá tu solicitud");
+      setBudgetSuccess(false);
+    }
+  }, [budgetSuccess, success]);
+
   // Contactar al trabajador
   const handleContact = async (e) => {
     e.preventDefault();
@@ -319,10 +329,13 @@ const WorkerProfilePage = () => {
         ...budgetForm,
       });
 
-      // 1️⃣ Cerrar modal primero
+      // Cerrar modal
       setBudgetModalOpen(false);
 
-      // 2️⃣ Resetear formulario
+      // Marcar éxito (el toast se dispara en useEffect)
+      setBudgetSuccess(true);
+
+      // Resetear formulario
       setBudgetForm({
         profession:
           worker.services?.length > 0 ? worker.services[0].profession : "",
@@ -336,11 +349,6 @@ const WorkerProfilePage = () => {
         urgent: "no",
       });
       clear();
-
-      // 3️⃣ Mostrar toast en el próximo tick
-      setTimeout(() => {
-        success("Solicitud enviada", "El trabajador recibirá tu solicitud");
-      }, 100);
     } catch (err) {
       const errorMsg =
         err.response?.data?.msg || "No se pudo enviar la solicitud";
